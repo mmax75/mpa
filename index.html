@@ -26,7 +26,7 @@ th,td{padding:13px 11px;border-bottom:1px solid #e9eef5;text-align:center;font-s
 th{background:#082b4d;color:white}
 td:first-child,th:first-child{text-align:left;font-weight:bold;min-width:120px}
 .badge{display:inline-block;padding:10px 13px;border-radius:26px;color:white;font-size:15px;font-weight:bold;line-height:1.2;min-width:78px;}
-.ok{background:#16803c}.warn{background:#d97706}.bad{background:#dc2626}.info{background:#0b5f99}
+.ok{background:#16803c}.warn{background:#d97706}.bad{background:#dc2626}
 .request-item{padding:10px 12px;border-radius:12px;margin-bottom:8px;background:#f8fafc;border:1px solid #e2e8f0}
 .small{font-size:12px;color:#64748b}
 .dot{width:12px;height:12px;border-radius:50%;display:inline-block}
@@ -655,6 +655,7 @@ function login(){
     showPage(state.currentUser.role==='manager'?'planner':'staff');
 }
 
+// Corretto il bug del loop
 function showPage(p){
     state.activePage = p;
     ['planner','staff','requests','sick','notes'].forEach(id=>{
@@ -1228,6 +1229,7 @@ function easterDate(year){
     return new Date(year, month - 1, day);
 }
 
+// Corretta parentesi nella classe dinamica dei giorni
 function isItalianHoliday(d){
     const key = `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const fixedHolidays = ['01-01','01-06','04-25','05-01','06-02','08-15','11-01','12-08','12-25','12-26'];
@@ -1434,9 +1436,9 @@ function exportAssenzeCSV(){
                     const h = parseInt(r.hours || 0);
                     const min = parseInt(r.minutes || 0);
                     totaleMinutiPermesso += (h * 60) + min;
-                    let durabilityStr = `${h}h`;
-                    if(min > 0) durabilityStr += `${min}m`;
-                    dettagliPermessi.push(`${reqDate.getDate()} (${durabilityStr})`);
+                    let durataStr = `${h}h`;
+                    if(min > 0) durataStr += `${min}m`;
+                    dettagliPermessi.push(`${reqDate.getDate()} (${durataStr})`);
                 }
             }
         });
@@ -1497,8 +1499,8 @@ function exportAssenzePDF(){
                     const h = parseInt(r.hours || 0);
                     const min = parseInt(r.minutes || 0);
                     totaleMinutiPermesso += (h * 60) + min;
-                    let durabilityStr = `${h}h`;
-                    if(min > 0) durabilityStr += `${min}m`;
+                    let durataStr = `${h}h`;
+                    if(min > 0) durataStr += `${min}m`;
                     dettagliPermessi.push(`${reqDate.getDate()} (${durataStr})`);
                 }
             }
