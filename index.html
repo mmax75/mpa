@@ -25,6 +25,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 body { background: var(--bg); color: var(--text); padding: 18px; }
 .hidden { display: none !important; }
+.hidden-all { display: none !important; }
 
 h1 { color: var(--primary); font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
 h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
@@ -35,7 +36,7 @@ h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
 .stat strong { font-size: 26px; color: var(--primary); display: block; margin-top: 4px; }
 
-/* Bottoni Arrotondati con Animazione */
+/* Bottoni Arrotondati */
 button { border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; font-size: 14px; cursor: pointer; background: #eef2ff; color: var(--primary); transition: all 0.2s ease; }
 button:active { transform: scale(0.97); }
 button.active, button.primary { background: var(--primary); color: white; }
@@ -149,15 +150,15 @@ th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; 
   </div>
 
   <div class="tabs desktop-tabs">
-    <button id="nav-planner" class="nav-btn" onclick="showPage('planner')">📅 Manager Turni<span id="dot-planner" class="notify-dot"></span></button>
-    <button id="nav-staff" class="nav-btn" onclick="showPage('staff')">👀 Vista Staff (Tutti)<span id="dot-staff" class="notify-dot"></span></button>
+    <button id="nav-planner" class="nav-btn hidden-all" onclick="showPage('planner')">📅 Manager Turni<span id="dot-planner" class="notify-dot"></span></button>
+    <button id="nav-staff" class="nav-btn" onclick="showPage('staff')">👀 Vista Staff<span id="dot-staff" class="notify-dot"></span></button>
     <button id="nav-requests" class="nav-btn" onclick="showPage('requests')">🌴 Ferie / Permessi<span id="dot-requests" class="notify-dot"></span></button>
     <button id="nav-sick" class="nav-btn" onclick="showPage('sick')">🤒 Malattia<span id="dot-sick" class="notify-dot"></span></button>
     <button id="nav-notes" class="nav-btn" onclick="showPage('notes')">📝 Comunicazioni<span id="dot-notes" class="notify-dot"></span></button>
   </div>
 
   <div class="mobile-nav">
-    <button id="nav-planner-mob" class="nav-btn hidden" onclick="showPage('planner')"><span class="icon">📅</span>Planner<span id="dot-planner-mob" class="notify-dot"></span></button>
+    <button id="nav-planner-mob" class="nav-btn hidden-all" onclick="showPage('planner')"><span class="icon">📅</span>Planner<span id="dot-planner-mob" class="notify-dot"></span></button>
     <button id="nav-staff-mob" class="nav-btn" onclick="showPage('staff')"><span class="icon">👥</span>Turni<span id="dot-staff-mob" class="notify-dot"></span></button>
     <button id="nav-requests-mob" class="nav-btn" onclick="showPage('requests')"><span class="icon">🌴</span>Ferie<span id="dot-requests-mob" class="notify-dot"></span></button>
     <button id="nav-sick-mob" class="nav-btn" onclick="showPage('sick')"><span class="icon">🤒</span>Malattia<span id="dot-sick-mob" class="notify-dot"></span></button>
@@ -174,13 +175,13 @@ th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; 
       <div style="font-weight:600; color:var(--text-light); font-size:13px; margin-bottom:12px;">SINCRONIZZAZIONE DATI</div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button style="flex:1;" onclick="load()">🔄 Aggiorna</button>
-          <button class="green" id="btnSave" onclick="save()" style="flex:1;">💾 Salva Cloud</button>
+          <button class="green" id="btnSave" onclick="save()" style="flex:1; display:none;">💾 Salva Cloud</button>
       </div>
       <button class="orange" id="btnNotifyShiftChange" onclick="notifyShiftChange()" style="margin-top:8px; width:100%; display:none;">📣 NOTIFICA TELEGRAM</button>
     </div>
   </div>
 
-  <section id="page-planner">
+  <section id="page-planner" class="hidden">
     <div class="controls" style="margin-top: 16px;">
       <button id="view-week" class="active" onclick="setView('week')">Settimana</button>
       <button id="view-month" onclick="setView('month')">Mese</button>
@@ -307,6 +308,11 @@ th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+// --- FUNZIONI DI SICUREZZA PER LOCALSTORAGE ---
+function safeGetItem(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+function safeSetItem(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
+function safeRemoveItem(key) { try { localStorage.removeItem(key); } catch(e) {} }
+
 // --- CONFIGURAZIONE ---
 const SUPABASE_URL = "https://wnosmlcnqrjfymzjxjnd.supabase.co";
 const SUPABASE_KEY = "sb_publishable_kk5hrv0K6em-ZCj-VGZkGw_lHsgFUTc";
@@ -369,7 +375,6 @@ const cashShiftOptions={
 };
 
 const absenceOptions={riposo:'Riposo',ferie:'Ferie',permesso:'Permesso',malattia:'Malattia'};
-
 const parkShifts = ['07:50-19:45', '07:50-13:50', '13:45-19:45', '07.50-19.45', '07.50-13.50', '13.45-19.45'];
 
 let state={
@@ -403,8 +408,11 @@ function touchUpdate(section){
   state.lastUpdates[section]=Date.now();
 }
 function seenStorageKey(){ return state.currentUser ? `mpa_seen_${state.currentUser.username}` : 'mpa_seen_guest'; }
-function getSeen(){ try{ return JSON.parse(localStorage.getItem(seenStorageKey())) || {}; }catch(e){ return {}; } }
-function setSeen(seen){ localStorage.setItem(seenStorageKey(), JSON.stringify(seen)); }
+function getSeen(){ 
+    let s = safeGetItem(seenStorageKey()); if(!s) return {};
+    try { return JSON.parse(s); } catch(e) { return {}; } 
+}
+function setSeen(seen){ safeSetItem(seenStorageKey(), JSON.stringify(seen)); }
 
 function pageSections(page){
   if(page==='planner') return ['shifts'];
@@ -515,7 +523,18 @@ async function save(section) {
 
 function getProposedEmpId() { return state.currentUser ? (state.currentUser.employeeId || (state.currentUser.username === 'gabriele' ? 'gabriele' : null)) : null; }
 
-// --- LOGIN & NAVIGAZIONE (CON SALVATAGGIO SESSIONE) ---
+// --- LOGICA LOGIN & NAVIGAZIONE CORRETTA ---
+function updateNavBarVisibility(isManager) {
+    const plannerNav = document.getElementById('nav-planner');
+    if (plannerNav) plannerNav.classList.toggle('hidden-all', !isManager);
+    
+    const plannerNavMob = document.getElementById('nav-planner-mob');
+    if (plannerNavMob) plannerNavMob.classList.toggle('hidden-all', !isManager);
+
+    if(document.getElementById('btnSave')) document.getElementById('btnSave').style.display = isManager ? 'inline-block' : 'none';
+    if(document.getElementById('btnNotifyShiftChange')) document.getElementById('btnNotifyShiftChange').style.display = isManager ? 'inline-block' : 'none';
+}
+
 function doLogin(u) {
     state.currentUser={username:u,...users[u]};
     document.getElementById('loginPage').classList.add('hidden');
@@ -525,10 +544,7 @@ function doLogin(u) {
     const isManager = state.currentUser.role === 'manager';
     const isSegreteria = state.currentUser.role === 'segreteria';
 
-    if(document.getElementById('nav-planner')) document.getElementById('nav-planner').style.display = isManager ? 'inline-block' : 'none';
-    if(document.getElementById('nav-planner-mob')) document.getElementById('nav-planner-mob').style.display = isManager ? 'flex' : 'none';
-    if(document.getElementById('btnSave')) document.getElementById('btnSave').style.display = isManager ? 'inline-block' : 'none';
-    if(document.getElementById('btnNotifyShiftChange')) document.getElementById('btnNotifyShiftChange').style.display = isManager ? 'inline-block' : 'none';
+    updateNavBarVisibility(isManager);
 
     if(document.getElementById('card-new-request')) document.getElementById('card-new-request').style.display = isSegreteria ? 'none' : 'block';
     if(document.getElementById('card-new-sick')) document.getElementById('card-new-sick').style.display = isSegreteria ? 'none' : 'block';
@@ -549,19 +565,19 @@ function login(){
     const p=document.getElementById('password').value;
     if(!users[u]||users[u].password!==p){ document.getElementById('loginError').classList.remove('hidden'); return; }
 
-    localStorage.setItem('mpa_session', u); // Salva l'utente per auto-login futuro
+    safeSetItem('mpa_session', u); 
     doLogin(u);
 }
 
 function checkSession() {
-    const savedUser = localStorage.getItem('mpa_session');
+    const savedUser = safeGetItem('mpa_session');
     if(savedUser && users[savedUser]) {
-        doLogin(savedUser); // Bypass password se già salvata
+        doLogin(savedUser);
     }
 }
 
 function logout(){ 
-    localStorage.removeItem('mpa_session'); // Rimuovi credenziali salvate
+    safeRemoveItem('mpa_session'); 
     stopRealtime(); stopSmartRefresh(); if(state.refreshTimer) clearInterval(state.refreshTimer); location.reload(); 
 }
 
@@ -577,7 +593,7 @@ function showPage(p){
       if(navMob) navMob.classList.toggle('active', id === p);
     });
 
-    load().then(() => { if (!localStorage.getItem(seenStorageKey())) markAllSeen(); else markPageSeen(p); });
+    load().then(() => { if (!safeGetItem(seenStorageKey())) markAllSeen(); else markPageSeen(p); });
 }
 
 function renderAll(){
@@ -610,7 +626,7 @@ function shiftEditor(emp, date, shift){
     return html;
 }
 
-// --- LOGICA IBRIDA PAGE STAFF ---
+// --- VISTA STAFF E AGENDA CELLULARE RAGGRUPPATA E ORDINATA ---
 function setStaffSubview(type) {
     state.staffSubview = type;
     document.getElementById('btn-subview-today').classList.toggle('active', type === 'today');
@@ -638,7 +654,7 @@ function renderStaff(){
             const s=state.shifts[dateKey(d)]?.[emp.id]?.shift || '-';
             let badgeClass = ''; 
             if(s === 'riposo') badgeClass = 'warn'; 
-            else if(['ferie','permesso','malattia'].includes(s)) badgeClass = 'bad'; 
+            else if(['ferie','permesso','malattia'].includes(s.toLowerCase())) badgeClass = 'bad'; 
             else if(parkShifts.includes(s)) badgeClass = 'park'; 
             else if(s !== '-' && s !== 'none') badgeClass = 'ok';
             html+=`<td class="${dayColumnClass(d)}"><span class="badge ${badgeClass}">${s==='none'?'-':s}</span></td>`;
@@ -664,7 +680,7 @@ function renderTodayView(){
         let myShift = state.shifts[k]?.[myEmpId]?.shift || 'none'; if(myShift === 'none' || myShift === '-') myShift = 'Riposo';
         let b = 'var(--primary)'; 
         if(['Riposo','riposo'].includes(myShift)) b = 'var(--warn)'; 
-        else if(['ferie','permesso','malattia'].includes(myShift)) b = 'var(--bad)';
+        else if(['ferie','permesso','malattia'].includes(myShift.toLowerCase())) b = 'var(--bad)';
         else if(parkShifts.includes(myShift)) b = 'var(--park)';
 
         html += `<div style="background:white; border-left:5px solid ${b}; padding:18px; border-radius:14px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border);">
@@ -673,61 +689,134 @@ function renderTodayView(){
         </div>`;
     }
 
-    html += `<div><div style="font-size:12px; font-weight:700; color:var(--text-light); margin-bottom:12px; letter-spacing:0.5px;">👥 SQUADRA OPERATIVA (Presenti)</div>`;
-    let count = 0;
+    let ormeggiatori = [];
+    let cassaPark = [];
+    
     employees.forEach(emp => {
         if(emp.id === myEmpId) return;
         const s = state.shifts[k]?.[emp.id]?.shift;
-        if(s && s !== 'none' && s !== 'riposo' && !['ferie','permesso','malattia','-'].includes(s)) {
-            count++;
-            let sBg = '#eef2ff', sCol = 'var(--primary)';
-            if(parkShifts.includes(s)) { sBg = '#e0f2fe'; sCol = 'var(--park)'; }
+        if(s && s !== 'none' && s !== 'riposo' && !['ferie','permesso','malattia','-'].includes(s.toLowerCase())) {
+            let badgeClass = 'ok';
+            if(parkShifts.includes(s)) badgeClass = 'park';
+            let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
 
-            html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border-radius:12px; margin-bottom:8px; border:1px solid #e9eef5;">
-                <div><span class="dot" style="background:${emp.color}"></span><b style="font-size:15px; color:var(--text);">${emp.name}</b><br><small style="color:var(--text-light); font-weight:500; margin-left:18px;">${emp.roles[0].charAt(0).toUpperCase() + emp.roles[0].slice(1)}</small></div>
-                <div style="font-weight:700; font-size:14px; color:${sCol}; background:${sBg}; padding:8px 12px; border-radius:10px;">${s}</div>
-            </div>`;
+            if (parkShifts.includes(s) || emp.roles.includes('cassa')) cassaPark.push(item);
+            else ormeggiatori.push(item);
         }
     });
-    if(count === 0) html += `<div style="padding:20px; text-align:center; color:var(--text-light); font-size:14px; font-style:italic; background:white; border-radius:14px; border:1px solid #e9eef5;">Nessun collega segnato operativo.</div>`;
+
+    html += `<div><div style="font-size:12px; font-weight:700; color:var(--text-light); margin-bottom:12px; letter-spacing:0.5px;">👥 SQUADRA OPERATIVA (Presenti)</div>`;
+    
+    if (ormeggiatori.length === 0 && cassaPark.length === 0) {
+        html += `<div style="padding:20px; text-align:center; color:var(--text-light); font-size:14px; font-style:italic; background:white; border-radius:14px; border:1px solid #e9eef5;">Nessun collega segnato operativo.</div>`;
+    } else {
+        if(ormeggiatori.length > 0) {
+            html += `<div style="margin-bottom:14px;">
+                <div style="font-size:11px; font-weight:800; color:var(--primary); letter-spacing:0.5px; margin-bottom:6px;">⚓ DECK / ORMEGGIO</div>`;
+            ormeggiatori.forEach(item => {
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border-radius:12px; margin-bottom:8px; border:1px solid #e9eef5;">
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
+                    <div style="font-weight:700; font-size:14px; color:var(--primary); background:#eef2ff; padding:8px 12px; border-radius:10px;">${item.s}</div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        if(cassaPark.length > 0) {
+            html += `<div style="margin-bottom:14px;">
+                <div style="font-size:11px; font-weight:800; color:var(--park); letter-spacing:0.5px; margin-bottom:6px;">🚙 CASSA & PARKING</div>`;
+            cassaPark.forEach(item => {
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border-radius:12px; margin-bottom:8px; border:1px solid #e9eef5;">
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
+                    <div style="font-weight:700; font-size:14px; color:var(--park); background:#e0f2fe; padding:8px 12px; border-radius:10px;">${item.s.replace(' (Park)','').replace(' park','').replace(' Park','')}</div>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+    }
     cont.innerHTML = html + `</div>`;
 }
 
 function renderWeeklyAgenda() {
     const cont = document.getElementById('agendaContainer');
+    if(!cont) return;
+    if (state.staffSubview !== 'agenda' || window.innerWidth > 768) { cont.classList.add('hidden'); return; }
+    cont.classList.remove('hidden');
+
     const dates = visibleDates(); const myEmpId = getProposedEmpId();
-    let html = `<div class="small" style="font-weight:700; color:var(--primary); margin-bottom:14px; text-align:center;">${periodLabel(dates)}</div>`;
+    let html = `<div class="small" style="font-weight:700; color:var(--primary); margin-bottom:16px; text-align:center; text-transform:uppercase; letter-spacing:0.8px; font-size:13px;">${periodLabel(dates)}</div>`;
 
     dates.forEach(d => {
         const k = dateKey(d); const dn = d.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'short' });
-        let myS = myEmpId ? (state.shifts[k]?.[myEmpId]?.shift || 'none') : null;
-        if(myS === 'none' || myS === '-') myS = 'Riposo';
         
-        let b = 'var(--primary)'; 
-        if(['Riposo','riposo'].includes(myS)) b = 'var(--warn)'; 
-        else if(['ferie','permesso','malattia'].includes(myS)) b = 'var(--bad)';
-        else if(parkShifts.includes(myS)) b = 'var(--park)';
+        let myS = null; let b = 'var(--primary)';
+        if (myEmpId) {
+            myS = state.shifts[k]?.[myEmpId]?.shift || 'none'; if(myS === 'none' || myS === '-') myS = 'Riposo';
+            if(['Riposo','riposo'].includes(myS)) b = 'var(--warn)'; 
+            else if(['ferie','permesso','malattia'].includes(myS.toLowerCase())) b = 'var(--bad)';
+            else if(parkShifts.includes(myS)) b = 'var(--park)';
+        }
 
-        html += `<div style="background:white; margin-bottom:14px; border-radius:14px; padding:14px; border:1px solid #e9eef5; ${dayColumnClass(d)?'background:#fff7ed; border-color:#fed7aa;':''}">
-            <div style="border-bottom:1px solid #e9eef5; padding-bottom:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-                <b style="text-transform:capitalize; font-size:15px; color:var(--text);">${dn}</b>
-                ${myEmpId && state.currentUser.role !== 'segreteria' ? `<div style="background:${b}; color:white; font-size:12px; font-weight:700; padding:6px 10px; border-radius:12px;">TU: ${myS}</div>` : ''}
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">`;
+        html += `<div style="background:white; margin-bottom:18px; border-radius:16px; padding:16px; border:1px solid #e2e8f0; box-shadow:0 4px 12px rgba(0,0,0,0.02); ${dayColumnClass(d)?'background:#fff7ed; border-color:#fed7aa;':''}">
+            <div style="border-bottom:1.5px solid #e2e8f0; padding-bottom:12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+                <b style="text-transform:capitalize; font-size:16px; color:var(--text); font-weight:800;">${dn}</b>
+                ${myS && state.currentUser.role !== 'segreteria' ? `<div style="background:${b}; color:white; font-size:12px; font-weight:700; padding:6px 12px; border-radius:12px; letter-spacing:0.3px;">TU: ${myS}</div>` : ''}
+            </div>`;
+
+        let ormeggiatori = [];
+        let cassaPark = [];
+        let assenti = [];
+        
         employees.forEach(emp => {
             if(emp.id === myEmpId) return;
             let s = state.shifts[k]?.[emp.id]?.shift || 'none'; if(s === 'none' || s === '-') s = 'Riposo';
-            let c = 'var(--text-light)', fw = '500';
             
-            if(['ferie','permesso','malattia'].includes(s)) { c = 'var(--bad)'; }
-            else if(parkShifts.includes(s)) { c = 'var(--park)'; fw = '700'; }
-            else if(s !== 'Riposo') { c = 'var(--primary)'; fw = '700'; }
+            let isAbsence = ['riposo', 'ferie', 'permesso', 'malattia'].includes(s.toLowerCase());
+            let badgeClass = 'ok';
+            if(s.toLowerCase() === 'riposo') badgeClass = 'warn';
+            else if(['ferie','permesso','malattia'].includes(s.toLowerCase())) badgeClass = 'bad';
+            else if(parkShifts.includes(s)) badgeClass = 'park';
 
-            html += `<div style="background:#f8fafc; padding:8px 10px; border-radius:10px; font-size:13px; display:flex; justify-content:space-between; border:1px solid var(--border);">
-                <span style="font-weight:600;">${emp.name}</span> <span style="color:${c}; font-weight:${fw};">${s}</span>
-            </div>`;
+            let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
+
+            if (isAbsence) { assenti.push(item); } 
+            else if (parkShifts.includes(s) || emp.roles.includes('cassa')) { cassaPark.push(item); } 
+            else { ormeggiatori.push(item); }
         });
-        html += `</div></div>`;
+
+        if(ormeggiatori.length > 0) {
+            html += `<div style="margin-bottom:14px;">
+                <div style="font-size:11px; font-weight:800; color:var(--primary); letter-spacing:0.5px; margin-bottom:6px;">⚓ DECK / ORMEGGIO</div>`;
+            ormeggiatori.forEach(item => {
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:6px;">
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
+                    <span class="badge ${item.bc}" style="min-width:95px; font-size:13px; font-weight:700;">${item.s}</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        if(cassaPark.length > 0) {
+            html += `<div style="margin-bottom:14px;">
+                <div style="font-size:11px; font-weight:800; color:var(--park); letter-spacing:0.5px; margin-bottom:6px;">🚙 CASSA & PARKING</div>`;
+            cassaPark.forEach(item => {
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:6px;">
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
+                    <span class="badge ${item.bc}" style="min-width:95px; font-size:13px; font-weight:700;">${item.s.replace(' (Park)','').replace(' park','').replace(' Park','')}</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        if(assenti.length > 0) {
+            html += `<div style="border-top:1px dashed #e2e8f0; padding-top:10px; margin-top:6px;">
+                <div style="font-size:11px; font-weight:800; color:var(--text-light); margin-bottom:6px; letter-spacing:0.5px;">🌴 ASSENTI / RIPOSO:</div>
+                <div style="font-size:13px; color:var(--text-light); line-height:1.5; display:flex; flex-wrap:wrap; gap:6px 10px;">`;
+            html += assenti.map(a => `<span style="background:#f1f5f9; padding:4px 8px; border-radius:6px; font-weight:600; font-size:12px; color:var(--text);"><span class="dot" style="background:${a.color}; width:6px; height:6px;"></span>${a.name} <span style="font-size:11px; font-weight:500; color:var(--text-light)">(${a.s.toLowerCase()})</span></span>`).join('');
+            html += `</div></div>`;
+        }
+
+        html += `</div>`;
     });
     cont.innerHTML = html;
 }
@@ -745,9 +834,9 @@ function autoGenerateWeek(){
         if(!state.shifts[k]) state.shifts[k] = {};
         employees.forEach(emp=>{
             if(!emp.roles.includes('ormeggio') || emp.roles.includes('cassa')) return;
-            const cur = state.shifts[k][emp.id]?.shift; if(['ferie','permesso','malattia'].includes(cur)) return;
+            const cur = state.shifts[k][emp.id]?.shift; if(cur && ['ferie','permesso','malattia'].includes(cur.toLowerCase())) return;
             const prev = state.shifts[prevK]?.[emp.id]?.shift;
-            if(!prev || ['ferie','permesso','malattia','riposo','none','-'].includes(prev)) state.shifts[k][emp.id] = {shift:'none', role:'ormeggio'};
+            if(!prev || ['ferie','permesso','malattia','riposo','none','-'].includes(prev.toLowerCase())) state.shifts[k][emp.id] = {shift:'none', role:'ormeggio'};
             else state.shifts[k][emp.id] = {shift:prev, role:'ormeggio'};
         });
     });
@@ -864,7 +953,7 @@ function dateKey(d){ return d.toISOString().split('T')[0]; }
 function dayHeader(d){ return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit'}); }
 function periodLabel(dates){ return dates[0].toLocaleDateString() + " - " + dates[dates.length-1].toLocaleDateString(); }
 function employeeHours(id, dates){ return dates.reduce((sum, d)=> sum + shiftHours(state.shifts[dateKey(d)]?.[id]?.shift), 0); }
-function shiftHours(s){ if(!s || ['riposo','ferie','permesso','malattia','none','-'].includes(s)) return 0; const p=s.split('-'); if(!p[0]||!p[1]) return 0; const [h1,m1]=p[0].split(/[:.]/).map(Number); const [h2,m2]=p[1].split(/[:.]/).map(Number); return ((h2*60+m2)-(h1*60+m1)-30)/60; }
+function shiftHours(s){ if(!s || ['riposo','ferie','permesso','malattia','none','-'].includes(s.toLowerCase())) return 0; const p=s.split('-'); if(!p[0]||!p[1]) return 0; const [h1,m1]=p[0].split(/[:.]/).map(Number); const [h2,m2]=p[1].split(/[:.]/).map(Number); return ((h2*60+m2)-(h1*60+m1)-30)/60; }
 function employeeName(id){ return employees.find(e=>e.id===id)?.name || id; }
 
 function fillEmployeeSelects(){
@@ -879,7 +968,6 @@ function movePeriod(n){ if(state.view==='week') state.weekOffset+=n; else state.
 function setView(v){ state.view=v; document.getElementById('view-week').classList.toggle('active', v==='week'); document.getElementById('view-month').classList.toggle('active', v==='month'); document.getElementById('staff-view-week').classList.toggle('active', v==='week'); document.getElementById('staff-view-month').classList.toggle('active', v==='month'); renderAll(); }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
 
-// --- FUNZIONE PDF COMPLETA CON LOGICA DI SPALMATURA AUTOMATICA SUI FOGLI ---
 function exportStaffPDF(){
     const title = "Marina Porto Antico - Turni Staff"; const period = document.getElementById('staffPeriodTitle')?.textContent || '';
     const isMonth = state.view === 'month'; const dates = visibleDates();
@@ -887,94 +975,27 @@ function exportStaffPDF(){
     const fmt = s => {
         if (!s || s==='none' || s==='-') return '-';
         let clean = s.replace(' (Park)', '').replace(' park', '').replace(' Park', '');
-        if (clean.includes('-') && !['riposo','ferie','permesso','malattia'].includes(clean.toLowerCase())) {
-            return clean.replace('-', '<br>');
-        }
+        if (clean.includes('-') && !['riposo','ferie','permesso','malattia'].includes(clean.toLowerCase())) { return clean.replace('-', '<br>'); }
         return clean;
     };
     
     const buildTable = (dg, lbl) => `
         <div class="split-title">${lbl}</div>
         <table>
-            <thead>
-                <tr>
-                    <th>Staff</th>
-                    ${dg.map(d=>`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`).join('')}
-                </tr>
-            </thead>
+            <thead><tr><th>Staff</th>${dg.map(d=>`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`).join('')}</tr></thead>
             <tbody>
-                ${employees.map(e=>`
-                    <tr>
-                        <td><span class="dot" style="background:${e.color}"></span><b>${e.name}</b></td>
-                        ${dg.map(d=>{
-                            let s=state.shifts[dateKey(d)]?.[e.id]?.shift; if(!s || s==='none') s='-'; 
-                            let b=''; 
-                            if(s==='riposo') b='warn'; 
-                            else if(['ferie','permesso','malattia'].includes(s)) b='bad'; 
-                            else if(parkShifts.includes(s)) b='park'; 
-                            else if(s!=='-') b='ok';
-                            return `<td class="${dayColumnClass(d)}"><span class="badge ${b}">${fmt(s)}</span></td>`;
-                        }).join('')}
-                    </tr>
-                `).join('')}
+                ${employees.map(e=>`<tr><td><span class="dot" style="background:${e.color}"></span><b>${e.name}</b></td>${dg.map(d=>{
+                    let s=state.shifts[dateKey(d)]?.[e.id]?.shift; if(!s || s==='none') s='-'; 
+                    let b=''; if(s.toLowerCase()==='riposo') b='warn'; else if(['ferie','permesso','malattia'].includes(s.toLowerCase())) b='bad'; else if(parkShifts.includes(s)) b='park'; else if(s!=='-') b='ok';
+                    return `<td class="${dayColumnClass(d)}"><span class="badge ${b}">${fmt(s)}</span></td>`;
+                }).join('')}</tr>`).join('')}
             </tbody>
         </table>`;
     
-    // Per il mese usiamo la classe "page-break" per separare i blocchi su due fogli distinti
-    let content = isMonth ? 
-        `${buildTable(dates.filter(d=>d.getDate()<=15),'Giorni 1 - 15')}<div class="page-break"></div>${buildTable(dates.filter(d=>d.getDate()>=16),'Giorni 16 - Fine Mese')}` 
-        : buildTable(dates,'Turni Settimanali');
+    let content = isMonth ? `${buildTable(dates.filter(d=>d.getDate()<=15),'Giorni 1 - 15')}<div class="page-break"></div>${buildTable(dates.filter(d=>d.getDate()>=16),'Giorni 16 - Fine Mese')}` : buildTable(dates,'Turni Settimanali');
     
-    const html = `<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<title>${title}</title>
-<style>
-*{ box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; } 
-body{ padding:0; margin:0; background:white; color:#1f2d3d; } 
-.print-wrap{ padding:4mm; } 
-h1{ color:#082b4d; margin:0 0 1mm; font-size:20px; font-weight:800; letter-spacing:-0.5px; } 
-.sub{ color:#64748b; margin-bottom:2mm; font-size:12px; font-weight:600; } 
-.split-title{ font-size:11px; font-weight:700; color:#082b4d; margin:3mm 0 2mm; text-transform:uppercase; letter-spacing:0.5px; } 
-table{ width:100%; border-collapse:collapse; background:white; table-layout: auto; margin-bottom:4px; } 
-th,td{ border:1px solid #cbd5e1; text-align:center; padding:5px 2px; vertical-align:middle; } 
-th{ background:#082b4d; color:white; font-size:10px; font-weight:700; text-transform:uppercase; height:32px; } 
-td:first-child,th:first-child{ text-align:left; width:32mm; min-width:32mm; font-weight:bold; background:#f8fafc; font-size:12px; } 
-td { height:34px; font-size:12px; }
-.special-day-col{ background:#fff7ed!important; } 
-th.special-day-col{ background:#fed7aa!important; color:#7c2d12!important; } 
-
-.badge{ 
-    display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 26px; 
-    padding: 2px; border-radius: 6px; color: white; font-size: 10.5px; font-weight: 700; line-height: 1.1; 
-    text-align: center; word-break: normal;
-} 
-.ok { background: #16803c !important; }
-.warn { background: #d97706 !important; color: white !important; }
-.bad { background: #dc2626 !important; }
-.park { background: #0284c7 !important; } 
-
-.dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } 
-@media print{ 
-    @page{ size:A4 landscape; margin:6mm; } 
-    .print-wrap{ padding:0; } 
-    .page-break { page-break-after: always; height: 0; margin: 0; border: 0; }
-}
-</style>
-</head>
-<body>
-<div class="print-wrap">
-    <h1>⚓ Marina Porto Antico</h1>
-    <div class="sub">${title} | ${period}</div>
-    ${content}
-</div>
-<script>setTimeout(()=>window.print(),500);<\/script>
-</body>
-</html>`;
-
-    const w = window.open(URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8;'})), '_blank'); 
-    if(!w) alert("Popup bloccato. Abilita i popup per poter esportare il PDF.");
+    const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${title}</title><style>*{ box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; } body{ padding:0; margin:0; background:white; color:#1f2d3d; } .print-wrap{ padding:4mm; } h1{ color:#082b4d; margin:0 0 1mm; font-size:20px; font-weight:800; letter-spacing:-0.5px; } .sub{ color:#64748b; margin-bottom:2mm; font-size:12px; font-weight:600; } .split-title{ font-size:11px; font-weight:700; color:#082b4d; margin:3mm 0 2mm; text-transform:uppercase; letter-spacing:0.5px; } table{ width:100%; border-collapse:collapse; background:white; table-layout: auto; margin-bottom:4px; } th,td{ border:1px solid #cbd5e1; text-align:center; padding:5px 2px; vertical-align:middle; } th{ background:#082b4d; color:white; font-size:10px; font-weight:700; text-transform:uppercase; height:32px; } td:first-child,th:first-child{ text-align:left; width:32mm; min-width:32mm; font-weight:bold; background:#f8fafc; font-size:12px; } td { height:34px; font-size:12px; } .special-day-col{ background:#fff7ed!important; } th.special-day-col{ background:#fed7aa!important; color:#7c2d12!important; } .badge{ display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 26px; padding: 2px; border-radius: 6px; color: white; font-size: 10.5px; font-weight: 700; line-height: 1.1; text-align: center; word-break: normal; } .ok { background: #16803c !important; } .warn { background: #d97706 !important; color: white !important; } .bad { background: #dc2626 !important; } .park { background: #0284c7 !important; } .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } @media print{ @page{ size:A4 landscape; margin:6mm; } .print-wrap{ padding:0; } .page-break { page-break-after: always; height: 0; margin: 0; border: 0; } }</style></head><body><div class="print-wrap"><h1>⚓ Marina Porto Antico</h1><div class="sub">${title} | ${period}</div>${content}</div><script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
+    const w = window.open(URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8;'})), '_blank'); if(!w) alert("Popup bloccato. Abilita i popup per poter esportare il PDF.");
 }
 
 function exportAssenzeCSV(){
@@ -1006,7 +1027,7 @@ function exportAssenzePDF(){
                 const th = parseInt(r.hours||0), tm = parseInt(r.minutes||0); pMins+=(th*60)+tm; pDet.push(`${rd.getDate()} (${th}h${tm>0?tm+'m':''})`);
             }
         });
-        if(fDays.length || pMins) rows += `<tr><td><b>${emp.name}</b></td><td>${fDays.length?fDays.length+' gg':'-'}</td><td><small>${fDays.join(', ')}</small></td><td style="color:#082b4d;font-weight:bold;">${pMins>0?Math.floor(pMins/60)+'h'+(pMins%60?pMins%60+'m':''):'-'}</td><td><small>${pDet.join(', ')}</small></td></tr>`;
+        if(fDays.length || pMins) rows += `<tr><td><b>${emp.name}</b></td><td>${fDays.length?fDays.length+' gg':'-'}</td><td><small>${fDays.join(', ')}</small></td><td style="color:#082b4d;font-weight:bold;">${pMins>0?Math.floor(pMins/60)+'h'+(pMins%60?pMins%60+'m':'-'):'-'}</td><td><small>${pDet.join(', ')}</small></td></tr>`;
     });
     const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report Assenze</title><style>body{font-family:sans-serif;padding:20px;} h1{color:#082b4d;font-size:20px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid #cbd5e1;padding:10px;text-align:center;font-size:12px;} th{background:#082b4d;color:white;} td:first-child{text-align:left;}</style></head><body><h1>⚓ Marina Porto Antico - Report Assenze</h1><p>Mese: <b>${lbl.toUpperCase()}</b></p><table><thead><tr><th rowspan="2">Dipendente</th><th colspan="2">Ferie</th><th colspan="2">Permessi</th></tr><tr><th>Totale</th><th>Giorni</th><th>Totale Ore</th><th>Dettaglio</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nessuna assenza</td></tr>'}</tbody></table><script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
     const w = window.open(URL.createObjectURL(new Blob([html], {type:'text/html'})), '_blank'); if(!w) alert("Popup bloccato.");
@@ -1022,9 +1043,7 @@ async function notifyShiftChange(){
     }catch(e){ toast("Errore invio ❌"); }
 }
 
-// Check session al caricamento della pagina
 checkSession();
-
 </script>
 </body>
 </html>
