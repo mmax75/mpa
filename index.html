@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Marina Turni">
+<title>Marina Porto Antico - Gestionale Turni</title>
+<style>
+/* --- VARIABILI E STILI MODERNI (App Look) --- */
+:root {
+  --primary: #082b4d;
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --text: #1f2d3d;
+  --text-light: #64748b;
+  --border: #e2e8f0;
+  --ok: #16803c;
+  --warn: #d97706;
+  --bad: #dc2626;
+  --park: #0284c7;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); padding: 18px; }
+.hidden { display: none !important; }
+
+h1 { color: var(--primary); font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+h2 { font-size: 18px; margin-bottom: 12px; color: var(--primary); }
+.sub { color: var(--text-light); margin: 4px 0 18px; font-size: 14px; }
+
+/* Cards Modificate */
+.card { background: var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.5); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.stat strong { font-size: 26px; color: var(--primary); display: block; margin-top: 4px; }
+
+/* Bottoni Arrotondati con Animazione */
+button { border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; font-size: 14px; cursor: pointer; background: #eef2ff; color: var(--primary); transition: all 0.2s ease; }
+button:active { transform: scale(0.97); }
+button.active, button.primary { background: var(--primary); color: white; }
+button.green { background: var(--ok); color: white; }
+button.orange { background: var(--warn); color: white; }
+button.red { background: var(--bad); color: white; }
+button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Input Arrotondati */
+input, select, textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: #f8fafc; font-size: 14px; color: var(--text); outline: none; transition: border 0.2s ease; }
+input:focus, select:focus, textarea:focus { border-color: var(--primary); background: white; }
+textarea { min-height: 80px; resize: vertical; }
+
+.tabs, .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+/* Tabelle Desktop */
+table { width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; }
+th, td { padding: 14px 12px; border-bottom: 1px solid var(--border); text-align: center; font-size: 14px; vertical-align: middle; }
+th { background: var(--primary); color: white; font-weight: 600; letter-spacing: 0.5px; }
+td:first-child, th:first-child { text-align: left; font-weight: bold; min-width: 120px; }
+
+/* Badges e UI */
+.badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 20px; color: white; font-size: 13px; font-weight: 700; min-width: 80px; }
+.ok { background: var(--ok); } 
+.warn { background: var(--warn); color: white; } 
+.bad { background: var(--bad); } 
+.park { background: var(--park); }
+
+.request-item { padding: 14px; border-radius: 14px; margin-bottom: 10px; background: #f8fafc; border: 1px solid var(--border); }
+.small { font-size: 12px; color: var(--text-light); }
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+/* Varie Layout */
+.login-wrap { min-height: 90vh; display: flex; align-items: center; justify-content: center; }
+.login-card { max-width: 400px; width: 100%; text-align: center; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.toast { position: fixed; right: 20px; bottom: 20px; background: var(--primary); color: white; padding: 14px 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 9999; font-weight: 600; text-align: center; }
+.manual-btn { padding: 8px 12px; font-size: 11px; margin-top: 6px; width: 100%; }
+.select-mini { padding: 8px 10px; border-radius: 8px; font-size: 13px; min-width: 115px; margin-right: 6px; border: 1px solid var(--border); }
+.special-day-col { background: #fff7ed !important; }
+th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; }
+.manager-table tbody tr:nth-child(even) { background: #f8fafc; }
+.manager-table tbody tr:hover td { background: #f1f5f9; }
+
+/* Notifiche Pallini */
+.nav-btn { position: relative; }
+.notify-dot { display: none; position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; background: var(--bad); border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 4px rgba(220,38,38,0.3); }
+.notify-dot.show { display: block; }
+
+/* Classi Utility Visibility */
+.mobile-nav { display: none; }
+.mobile-only { display: none; }
+.desktop-only { display: block; }
+.desktop-inline { display: inline-block; }
+
+/* --- RESPONSIVE MOBILE --- */
+@media(max-width:900px){ table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; } }
+
+@media(max-width:768px) {
+    body { padding-bottom: 90px; }
+    .desktop-tabs { display: none !important; }
+    .mobile-only { display: block; }
+    .desktop-only { display: none !important; }
+    .desktop-inline { display: none !important; }
+    
+    .mobile-nav {
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+        background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        justify-content: space-around; padding: 10px 5px 25px; margin: 0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 1000; border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    .mobile-nav button {
+        flex-direction: column; background: transparent; color: var(--text-light);
+        padding: 8px 4px; font-size: 11px; width: 20%; border-radius: 12px; gap: 4px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .mobile-nav button.active { color: var(--primary); background: transparent; }
+    .mobile-nav button .icon { font-size: 22px; display: block; filter: grayscale(1); opacity: 0.7; }
+    .mobile-nav button.active .icon { filter: grayscale(0); opacity: 1; transform: scale(1.1); transition: 0.2s; }
+    .mobile-nav .notify-dot { top: 4px; right: 14px; }
+    
+    .toast { bottom: 100px; left: 20px; right: 20px; text-align: center; max-width: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="loginPage" class="login-wrap">
+  <div class="card login-card">
+    <h1 style="font-size: 26px; margin-bottom: 6px;">⚓ Porto Antico</h1>
+    <div class="sub" style="margin-bottom: 24px;">Gestionale Turni Cloud</div>
+    <label style="display:block; text-align:left; margin-bottom:6px; font-size:13px; font-weight:600; color:var(--text-light);">Nome Utente</label>
+    <input id="username" placeholder="Inserisci utente" autocapitalize="none" style="margin-bottom: 16px;">
+    <label style="display:block; text-align:left; margin-bottom:6px; font-size:13px; font-weight:600; color:var(--text-light);">Password</label>
+    <input id="password" type="password" placeholder="Inserisci password" onkeydown="if(event.key==='Enter')login()">
+    <button class="primary" style="width:100%; margin-top: 24px; padding: 16px;" onclick="login()">Accedi al sistema</button>
+    <div id="loginError" class="alert hidden" style="margin-top:16px; color:var(--bad); font-weight: bold;">Credenziali errate</div>
+  </div>
+</div>
+
+<div id="appPage" class="hidden">
+  <div class="top">
+    <div>
+      <h1 style="margin-bottom: 4px;">⚓ Marina Porto Antico</h1>
+      <div class="small" id="cloudStatus">Sincronizzazione in corso...</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="small" style="font-weight:bold; color:var(--primary); margin-bottom:6px;" id="currentUserName"></div>
+      <button class="red" style="padding: 8px 14px; font-size: 12px;" onclick="logout()">Disconnetti</button>
+    </div>
+  </div>
+
+  <div class="tabs desktop-tabs">
+    <button id="nav-planner" class="nav-btn" onclick="showPage('planner')">📅 Manager Turni<span id="dot-planner" class="notify-dot"></span></button>
+    <button id="nav-staff" class="nav-btn" onclick="showPage('staff')">👀 Vista Staff (Tutti)<span id="dot-staff" class="notify-dot"></span></button>
+    <button id="nav-requests" class="nav-btn" onclick="showPage('requests')">🌴 Ferie / Permessi<span id="dot-requests" class="notify-dot"></span></button>
+    <button id="nav-sick" class="nav-btn" onclick="showPage('sick')">🤒 Malattia<span id="dot-sick" class="notify-dot"></span></button>
+    <button id="nav-notes" class="nav-btn" onclick="showPage('notes')">📝 Comunicazioni<span id="dot-notes" class="notify-dot"></span></button>
+  </div>
+
+  <div class="mobile-nav">
+    <button id="nav-planner-mob" class="nav-btn hidden" onclick="showPage('planner')"><span class="icon">📅</span>Planner<span id="dot-planner-mob" class="notify-dot"></span></button>
+    <button id="nav-staff-mob" class="nav-btn" onclick="showPage('staff')"><span class="icon">👥</span>Turni<span id="dot-staff-mob" class="notify-dot"></span></button>
+    <button id="nav-requests-mob" class="nav-btn" onclick="showPage('requests')"><span class="icon">🌴</span>Ferie<span id="dot-requests-mob" class="notify-dot"></span></button>
+    <button id="nav-sick-mob" class="nav-btn" onclick="showPage('sick')"><span class="icon">🤒</span>Malattia<span id="dot-sick-mob" class="notify-dot"></span></button>
+    <button id="nav-notes-mob" class="nav-btn" onclick="showPage('notes')"><span class="icon">📝</span>Note<span id="dot-notes-mob" class="notify-dot"></span></button>
+  </div>
+
+  <div class="grid">
+    <div class="card stat" style="margin-bottom:0;">
+      <div style="font-weight:600; color:var(--text-light); font-size:13px;">PERIODO OPERATIVO</div>
+      <strong id="monthTitle"></strong>
+      <input type="month" id="monthPicker" style="margin-top:12px;" onchange="changeMonth()">
+    </div>
+    <div class="card stat" style="margin-bottom:0;">
+      <div style="font-weight:600; color:var(--text-light); font-size:13px; margin-bottom:12px;">SINCRONIZZAZIONE DATI</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button style="flex:1;" onclick="load()">🔄 Aggiorna</button>
+          <button class="green" id="btnSave" onclick="save()" style="flex:1;">💾 Salva Cloud</button>
+      </div>
+      <button class="orange" id="btnNotifyShiftChange" onclick="notifyShiftChange()" style="margin-top:8px; width:100%; display:none;">📣 NOTIFICA TELEGRAM</button>
+    </div>
+  </div>
+
+  <section id="page-planner">
+    <div class="controls" style="margin-top: 16px;">
+      <button id="view-week" class="active" onclick="setView('week')">Settimana</button>
+      <button id="view-month" onclick="setView('month')">Mese</button>
+      <button onclick="movePeriod(-1)">◀ Prec</button>
+      <button onclick="movePeriod(1)">Succ ▶</button>
+      <button class="orange" onclick="autoGenerateWeek()">Replica settimana</button>
+      <button class="red" onclick="clearVisiblePeriod()">Pulisci</button>
+      <button class="green" onclick="addCustomShift()">➕ Nuovo turno</button>
+      <button class="red" onclick="deleteCustomShift()">🗑️ Cancella turno</button>
+    </div>
+    <div class="card">
+      <div id="periodTitle" class="small" style="margin-bottom:12px; font-weight:bold; color:var(--primary);"></div>
+      <div id="plannerContainer"></div>
+    </div>
+  </section>
+
+  <section id="page-staff" class="hidden">
+    <div class="card" style="margin-top: 16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+          <h2 style="margin-bottom:0;">Turni dello Staff</h2>
+          <div class="mobile-only" style="margin-top:12px; margin-bottom:12px; width:100%;">
+              <div style="display:flex; gap:6px;">
+                  <button id="btn-subview-today" class="active" style="flex:1; padding:10px;" onclick="setStaffSubview('today')">📍 Vista Oggi</button>
+                  <button id="btn-subview-agenda" style="flex:1; padding:10px;" onclick="setStaffSubview('agenda')">📅 Vista Agenda</button>
+              </div>
+          </div>
+      </div>
+
+      <div class="controls desktop-only" style="display:flex; margin-top:16px;">
+        <button id="staff-view-week" class="active" onclick="setView('week')">Settimana</button>
+        <button id="staff-view-month" onclick="setView('month')">Mese</button>
+        <button onclick="movePeriod(-1)">◀ Prec</button>
+        <button onclick="movePeriod(1)">Succ ▶</button>
+        <button class="primary" onclick="exportStaffPDF()">📄 Esporta Tabellone (PDF)</button>
+      </div>
+
+      <div id="staffPeriodTitle" class="small desktop-only" style="margin-bottom:12px; font-weight:bold; color:var(--primary);"></div>
+      
+      <div id="staffContainer" class="desktop-only"></div>
+      <div id="todayContainer" class="mobile-only"></div>
+      <div id="agendaContainer" class="hidden"></div>
+    </div>
+  </section>
+
+  <section id="page-requests" class="hidden">
+    <div class="grid" style="margin-top: 16px;">
+      <div class="card" id="card-new-request">
+        <h2>Nuova Richiesta</h2>
+        <label>Dipendente</label>
+        <select id="requestEmployee" style="margin-bottom:12px"></select>
+        <label>Tipo</label>
+        <select id="requestType" style="margin-bottom:12px" onchange="toggleRequestFields()">
+          <option value="Ferie">Ferie (Giorni)</option>
+          <option value="Permesso">Permesso (Ore)</option>
+        </select>
+        <div id="fieldsFerie">
+          <label>Dal giorno</label>
+          <input id="requestFrom" type="date" style="margin-bottom:12px">
+          <label>Al giorno</label>
+          <input id="requestTo" type="date" style="margin-bottom:12px">
+        </div>
+        <div id="fieldsPermesso" class="hidden">
+          <label>Giorno del permesso</label>
+          <input id="requestDay" type="date" style="margin-bottom:12px">
+          <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <div style="flex:1"><label>Ore</label><select id="requestHours"><option value="0">0 ore</option><option value="1">1 ora</option><option value="2">2 ore</option><option value="3">3 ore</option><option value="4">4 ore</option><option value="5">5 ore</option><option value="6">6 ore</option><option value="7">7 ore</option><option value="8">8 ore</option></select></div>
+            <div style="flex:1"><label>Minuti</label><select id="requestMinutes"><option value="0">00 min</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option></select></div>
+          </div>
+        </div>
+        <label>Note / Motivazione</label>
+        <textarea id="requestNote" placeholder="Aggiungi dettagli..."></textarea>
+        <button class="primary" id="btnSubmitReq" style="width:100%; margin-top:16px;" onclick="submitRequest()">Invia Richiesta</button>
+      </div>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+          <h2 style="margin:0;">Storico Richieste</h2>
+          <div style="display:flex; gap:6px;" class="desktop-inline">
+            <button id="btnExportAssenze" class="primary hidden" onclick="exportAssenzePDF()">📄 Report PDF</button>
+            <button id="btnExportAssenzeCSV" class="green hidden" onclick="exportAssenzeCSV()">📊 Export Excel</button>
+          </div>
+        </div>
+        <div id="requestsList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-sick" class="hidden">
+    <div class="grid" style="margin-top: 16px;">
+      <div class="card" id="card-new-sick">
+        <h2>Segnala Malattia</h2>
+        <label>Dipendente</label>
+        <select id="sickEmployee" style="margin-bottom:12px"></select>
+        <label>Dal giorno</label>
+        <input id="sickFrom" type="date" style="margin-bottom:12px">
+        <label>Al giorno</label>
+        <input id="sickTo" type="date" style="margin-bottom:12px">
+        <button class="red" style="margin-top:12px; width:100%" onclick="submitSick()">Registra Malattia Online</button>
+      </div>
+      <div class="card">
+        <h2>Registro Assenze Malattia</h2>
+        <div id="sickList" style="margin-top:16px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="page-notes" class="hidden">
+    <div class="card" style="margin-top: 16px;">
+      <h2>Comunicazioni in Bacheca</h2>
+      <label>Data di riferimento</label>
+      <input id="noteDate" type="date" style="margin-bottom:12px">
+      <label>Messaggio</label>
+      <textarea id="noteText" placeholder="Scrivi un messaggio per tutto lo staff..."></textarea>
+      <button class="primary" style="margin-top:16px; width:100%" onclick="saveServiceNote()">Pubblica Messaggio</button>
+      <div style="border-top:1px solid var(--border); margin-top:24px; padding-top:20px;">
+          <h3 style="font-size:16px; color:var(--text-light); margin-bottom:16px;">Storico Comunicazioni</h3>
+          <div id="notesList"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// --- CONFIGURAZIONE ---
+const SUPABASE_URL = "https://wnosmlcnqrjfymzjxjnd.supabase.co";
+const SUPABASE_KEY = "sb_publishable_kk5hrv0K6em-ZCj-VGZkGw_lHsgFUTc";
+const SUPABASE_TABLE = "app_data";
+const SUPABASE_RECORD_ID = "marina_porto_antico";
+const TELEGRAM_NOTIFY_ENDPOINT = "https://wnosmlcnqrjfymzjxjnd.supabase.co/functions/v1/notify-shift-change";
+
+const users={
+  manager:{password:'manager123',name:'Manager',role:'manager',employeeId:null},
+  gabriele:{password:'gabriele321',name:'Gabriele',role:'manager',employeeId:null},
+  segreteria:{password:'2876',name:'Segreteria',role:'segreteria',employeeId:null},
+  djily:{password:'3344',name:'Djily',role:'staff',employeeId:'djily'},
+  security:{password:'1234',name:'Security',role:'staff',employeeId:'security'},
+  alessandro:{password:'3639',name:'Alessandro',role:'staff',employeeId:'alessandro'},
+  fabio:{password:'4554',name:'Fabio',role:'staff',employeeId:'fabio'},
+  luca:{password:'6632',name:'Luca',role:'staff',employeeId:'luca'},
+  rickys:{password:'7472',name:'Ricky S.',role:'staff',employeeId:'riccardos'},
+  nicolas:{password:'5272',name:'Nicolas',role:'staff',employeeId:'nicolas'},
+  vasili:{password:'9432',name:'Vasili',role:'staff',employeeId:'vasili'},
+  rickyl:{password:'3765',name:'Ricky L.',role:'staff',employeeId:'riccardol'},
+  maurizio:{password:'9912',name:'Maurizio',role:'staff',employeeId:'maurizio'}
+};
+
+const employees=[
+  {id:'gabriele',name:'Gabriele',roles:['ormeggio'],color:'#0369a1'},
+  {id:'alessandro',name:'Alessandro',roles:['ormeggio'],color:'#0b5f99'},
+  {id:'fabio',name:'Fabio',roles:['ormeggio'],color:'#16803c'},
+  {id:'luca',name:'Luca',roles:['ormeggio'],color:'#d97706'},
+  {id:'riccardos',name:'Ricky S.',roles:['ormeggio'],color:'#7c3aed'},
+  {id:'nicolas',name:'Nicolas',roles:['ormeggio'],color:'#dc2626'},
+  {id:'djily',name:'Djily',roles:['ormeggio'],color:'#2563eb'},
+  {id:'vasili',name:'Vasili',roles:['ormeggio','cassa'],color:'#0891b2'},
+  {id:'riccardol',name:'Ricky L.',roles:['cassa'],color:'#be185d'},
+  {id:'maurizio',name:'Maurizio',roles:['cassa'],color:'#475569'},
+  {id:'security',name:'Security',roles:['cassa'],color:'#111827'}
+];
+
+const mooringShiftOptions = {
+  none: '-',
+  '07:00-15:30': '07:00-15:30',
+  '08:00-16:30': '08:00-16:30',
+  '08:00-17:30': '08:00-17:30',
+  '08:00-18:30': '08:00-18:30',
+  '09:00-19:30': '09:00-19:30',
+  '10:00-18:30': '10:00-18:30',
+  '10:00-19:30': '10:00-19:30',
+  '11:00-19:30': '11:00-19:30'
+};
+
+const cashShiftOptions={
+  none:'-',
+  '08:00-16:30':'08:00-16:30',
+  '10:00-18:30':'10:00-18:30',
+  '08:00-18:30':'08:00-18:30',
+  '09:00-19:30':'09:00-19:30',
+  '10:00-20:30':'10:00-20:30',
+  '07:50-19:45':'07:50-19:45 (Park)',
+  '07:50-13:50':'07:50-13:50 (Park)',
+  '13:45-19:45':'13:45-19:45 (Park)'
+};
+
+const absenceOptions={riposo:'Riposo',ferie:'Ferie',permesso:'Permesso',malattia:'Malattia'};
+
+const parkShifts = ['07:50-19:45', '07:50-13:50', '13:45-19:45', '07.50-19.45', '07.50-13.50', '13.45-19.45'];
+
+let state={
+  currentUser:null,
+  currentDate:new Date(),
+  todayViewDate: new Date(),
+  view:'week',
+  weekOffset:0,
+  shifts:{},
+  requests:[],
+  sick:[],
+  notes:{},
+  customShiftOptions:{},
+  staffSubview: window.innerWidth <= 768 ? 'today' : 'table',
+  lastUpdates:{shifts:0,requests:0,sick:0,notes:0},
+  activePage:null,
+  refreshTimer:null,
+  smartRefreshTimer:null,
+  lastKnownUpdatedAt:null,
+  realtimeClient:null,
+  realtimeChannel:null,
+  realtimeDebounceTimer:null
+};
+
+// --- NOTIFICHE PALLINO ROSSO ---
+function normalizeLastUpdates(obj){
+  return { shifts:Number(obj?.shifts||0), requests:Number(obj?.requests||0), sick:Number(obj?.sick||0), notes:Number(obj?.notes||0) };
+}
+function touchUpdate(section){
+  if(!state.lastUpdates) state.lastUpdates={shifts:0,requests:0,sick:0,notes:0};
+  state.lastUpdates[section]=Date.now();
+}
+function seenStorageKey(){ return state.currentUser ? `mpa_seen_${state.currentUser.username}` : 'mpa_seen_guest'; }
+function getSeen(){ try{ return JSON.parse(localStorage.getItem(seenStorageKey())) || {}; }catch(e){ return {}; } }
+function setSeen(seen){ localStorage.setItem(seenStorageKey(), JSON.stringify(seen)); }
+
+function pageSections(page){
+  if(page==='planner') return ['shifts'];
+  if(page==='staff') return ['shifts'];
+  if(page==='requests') return ['requests'];
+  if(page==='sick') return ['sick'];
+  if(page==='notes') return ['notes'];
+  return [];
+}
+function markPageSeen(page){
+  const seen=getSeen(); pageSections(page).forEach(section=>{ seen[section]=state.lastUpdates[section] || 0; });
+  setSeen(seen); updateNotificationDots();
+}
+function markAllSeen(){
+  const seen=getSeen(); ['shifts','requests','sick','notes'].forEach(section=>{ seen[section]=state.lastUpdates[section] || 0; });
+  setSeen(seen); updateNotificationDots();
+}
+
+function setDot(id, show){
+  const topEl = document.getElementById('dot-'+id);
+  const mobEl = document.getElementById('dot-'+id+'-mob');
+  if(topEl) topEl.classList.toggle('show', !!show);
+  if(mobEl) mobEl.classList.toggle('show', !!show);
+}
+function updateNotificationDots(){
+  if(!state.currentUser) return;
+  const seen=getSeen();
+  const hasNew={
+    shifts:(state.lastUpdates.shifts||0) > (seen.shifts||0),
+    requests:(state.lastUpdates.requests||0) > (seen.requests||0),
+    sick:(state.lastUpdates.sick||0) > (seen.sick||0),
+    notes:(state.lastUpdates.notes||0) > (seen.notes||0)
+  };
+  setDot('planner', hasNew.shifts && state.currentUser.role==='manager');
+  setDot('staff', hasNew.shifts);
+  setDot('requests', hasNew.requests);
+  setDot('sick', hasNew.sick);
+  setDot('notes', hasNew.notes);
+}
+
+// --- SUPABASE & REALTIME ---
+function startRealtime(){
+    if(!state.currentUser || state.currentUser.role === 'manager') return;
+    if(!window.supabase) return;
+    stopRealtime();
+    state.realtimeClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    state.realtimeChannel = state.realtimeClient
+        .channel('mpa-realtime-' + state.currentUser.username)
+        .on('postgres_changes', { event: '*', schema: 'public', table: SUPABASE_TABLE }, payload => {
+            const newId = payload.new?.id || null; const oldId = payload.old?.id || null;
+            if(newId !== SUPABASE_RECORD_ID && oldId !== SUPABASE_RECORD_ID) return;
+            if(state.realtimeDebounceTimer) clearTimeout(state.realtimeDebounceTimer);
+            state.realtimeDebounceTimer = setTimeout(async () => { await load(true); toast("Turni aggiornati live ✅"); }, 400);
+        }).subscribe();
+}
+function stopRealtime(){
+    if(state.realtimeDebounceTimer) clearTimeout(state.realtimeDebounceTimer);
+    if(state.realtimeClient && state.realtimeChannel) state.realtimeClient.removeChannel(state.realtimeChannel);
+    state.realtimeChannel = null; state.realtimeClient = null;
+}
+async function checkForCloudUpdates(){
+    if(!state.currentUser || state.currentUser.role === 'manager') return;
+    try{
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${SUPABASE_RECORD_ID}&select=updated_at`, { headers:{ apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Cache-Control": "no-cache" } });
+        const rows = await res.json(); const remoteUpdatedAt = rows[0]?.updated_at || null;
+        if(!remoteUpdatedAt) return;
+        if(!state.lastKnownUpdatedAt){ state.lastKnownUpdatedAt = remoteUpdatedAt; return; }
+        if(remoteUpdatedAt !== state.lastKnownUpdatedAt){ state.lastKnownUpdatedAt = remoteUpdatedAt; await load(true); toast("Sincronizzazione completata ✅"); }
+    }catch(e){}
+}
+function startSmartRefresh(){
+    if(!state.currentUser || state.currentUser.role === 'manager') return;
+    stopSmartRefresh(); state.smartRefreshTimer = setInterval(checkForCloudUpdates, 15000);
+}
+function stopSmartRefresh(){ if(state.smartRefreshTimer){ clearInterval(state.smartRefreshTimer); state.smartRefreshTimer = null; } }
+
+function buildCloudPayload(){
+    return { shifts: state.shifts, requests: state.requests, sick: state.sick, notes: state.notes, customShiftOptions: state.customShiftOptions, lastUpdates: state.lastUpdates };
+}
+function applyCloudData(record){
+    record = record || {};
+    state.shifts = record.shifts || {}; state.requests = record.requests || []; state.sick = record.sick || []; state.notes = record.notes || {}; state.customShiftOptions = record.customShiftOptions || {}; state.lastUpdates = normalizeLastUpdates(record.lastUpdates);
+}
+
+async function load() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${SUPABASE_RECORD_ID}&select=data,updated_at`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Cache-Control": "no-cache" } });
+        const rows = await res.json();
+        state.lastKnownUpdatedAt = rows[0]?.updated_at || state.lastKnownUpdatedAt;
+        applyCloudData(rows[0]?.data || {});
+        document.getElementById('cloudStatus').textContent = "Connesso Cloud: " + new Date().toLocaleTimeString();
+        renderAll();
+        if(state.activePage) markPageSeen(state.activePage); else updateNotificationDots();
+    } catch(e) { document.getElementById('cloudStatus').textContent = "Errore Cloud ❌"; }
+}
+
+async function save(section) {
+    try {
+        if(section) touchUpdate(section); toast("Salvataggio...");
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?id=eq.${SUPABASE_RECORD_ID}`, {
+            method: 'PATCH',
+            headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, Prefer: "return=minimal" },
+            body: JSON.stringify({ data: buildCloudPayload(), updated_at: new Date().toISOString() })
+        });
+        if(!res.ok) throw new Error(); toast("Sincronizzato ✅"); await load();
+    } catch(e) { toast("Errore di rete"); }
+}
+
+function getProposedEmpId() { return state.currentUser ? (state.currentUser.employeeId || (state.currentUser.username === 'gabriele' ? 'gabriele' : null)) : null; }
+
+// --- LOGIN & NAVIGAZIONE (CON SALVATAGGIO SESSIONE) ---
+function doLogin(u) {
+    state.currentUser={username:u,...users[u]};
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('appPage').classList.remove('hidden');
+    document.getElementById('currentUserName').textContent=state.currentUser.name;
+
+    const isManager = state.currentUser.role === 'manager';
+    const isSegreteria = state.currentUser.role === 'segreteria';
+
+    if(document.getElementById('nav-planner')) document.getElementById('nav-planner').style.display = isManager ? 'inline-block' : 'none';
+    if(document.getElementById('nav-planner-mob')) document.getElementById('nav-planner-mob').style.display = isManager ? 'flex' : 'none';
+    if(document.getElementById('btnSave')) document.getElementById('btnSave').style.display = isManager ? 'inline-block' : 'none';
+    if(document.getElementById('btnNotifyShiftChange')) document.getElementById('btnNotifyShiftChange').style.display = isManager ? 'inline-block' : 'none';
+
+    if(document.getElementById('card-new-request')) document.getElementById('card-new-request').style.display = isSegreteria ? 'none' : 'block';
+    if(document.getElementById('card-new-sick')) document.getElementById('card-new-sick').style.display = isSegreteria ? 'none' : 'block';
+    if(document.getElementById('btnExportAssenze')) document.getElementById('btnExportAssenze').classList.toggle('hidden', !(isManager||isSegreteria));
+    if(document.getElementById('btnExportAssenzeCSV')) document.getElementById('btnExportAssenzeCSV').classList.toggle('hidden', !(isManager||isSegreteria));
+
+    fillEmployeeSelects();
+    if(state.refreshTimer) clearInterval(state.refreshTimer); stopRealtime(); stopSmartRefresh();
+    if (!isManager) { state.refreshTimer = setInterval(()=>load(true), 300000); startRealtime(); startSmartRefresh(); }
+    
+    state.staffSubview = window.innerWidth <= 768 ? 'today' : 'table';
+    state.todayViewDate = new Date();
+    showPage(isManager ? 'planner' : 'staff');
+}
+
+function login(){
+    const u=document.getElementById('username').value.trim().toLowerCase();
+    const p=document.getElementById('password').value;
+    if(!users[u]||users[u].password!==p){ document.getElementById('loginError').classList.remove('hidden'); return; }
+
+    localStorage.setItem('mpa_session', u); // Salva l'utente per auto-login futuro
+    doLogin(u);
+}
+
+function checkSession() {
+    const savedUser = localStorage.getItem('mpa_session');
+    if(savedUser && users[savedUser]) {
+        doLogin(savedUser); // Bypass password se già salvata
+    }
+}
+
+function logout(){ 
+    localStorage.removeItem('mpa_session'); // Rimuovi credenziali salvate
+    stopRealtime(); stopSmartRefresh(); if(state.refreshTimer) clearInterval(state.refreshTimer); location.reload(); 
+}
+
+function showPage(p){
+    state.activePage = p;
+    ['planner','staff','requests','sick','notes'].forEach(id=>{
+      const pageEl = document.getElementById('page-'+id);
+      if(pageEl) pageEl.classList.toggle('hidden', id !== p);
+      
+      const navTop = document.getElementById('nav-'+id);
+      if(navTop) navTop.classList.toggle('active', id === p);
+      const navMob = document.getElementById('nav-'+id+'-mob');
+      if(navMob) navMob.classList.toggle('active', id === p);
+    });
+
+    load().then(() => { if (!localStorage.getItem(seenStorageKey())) markAllSeen(); else markPageSeen(p); });
+}
+
+function renderAll(){
+    document.getElementById('monthTitle').textContent=state.currentDate.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+    renderPlanner(); renderStaff(); renderRequests(); renderSick(); renderNotes(); updateNotificationDots();
+}
+
+function renderPlanner(){
+    const cont = document.getElementById('plannerContainer'); if(!cont) return;
+    const dates = visibleDates(); document.getElementById('periodTitle').textContent = periodLabel(dates);
+    let html='<table class="manager-table"><thead><tr><th>Staff</th>';
+    dates.forEach(d=>html+=`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`); html+='<th>Ore</th></tr></thead><tbody>';
+    employees.forEach(emp=>{
+        html+=`<tr><td><span class="dot" style="background:${emp.color}"></span><b>${emp.name}</b></td>`;
+        dates.forEach(d=>{ const k=dateKey(d); const current = state.shifts[k]?.[emp.id]?.shift || 'none'; html+=`<td class="${dayColumnClass(d)}">${shiftEditor(emp, k, current)}</td>`; });
+        html+=`<td style="font-weight:bold">${employeeHours(emp.id, dates).toFixed(1)}</td></tr>`;
+    });
+    cont.innerHTML = html + '</tbody></table>';
+}
+
+function shiftEditor(emp, date, shift){
+    const disabled = state.currentUser.role !== 'manager' ? 'disabled' : '';
+    const baseOpts = emp.roles.includes('cassa') ? cashShiftOptions : mooringShiftOptions;
+    const allOpts = {...baseOpts, ...(state.customShiftOptions || {}), ...absenceOptions};
+    let html = `<select class="select-mini" ${disabled} onchange="updateShift('${emp.id}','${date}',this.value)">`;
+    orderedShiftEntries(allOpts).forEach(([v,l])=> { html += `<option value="${v}" ${shift===v?'selected':''}>${l}</option>`; });
+    if(!allOpts[shift] && shift !== 'none') html += `<option value="${shift}" selected>${shift}</option>`;
+    html += '</select>';
+    if(state.currentUser.role === 'manager') html += `<button class="manual-btn" onclick="setManualShift('${emp.id}','${date}')">Modifica lib.</button>`;
+    return html;
+}
+
+// --- LOGICA IBRIDA PAGE STAFF ---
+function setStaffSubview(type) {
+    state.staffSubview = type;
+    document.getElementById('btn-subview-today').classList.toggle('active', type === 'today');
+    document.getElementById('btn-subview-agenda').classList.toggle('active', type === 'agenda');
+    renderStaff();
+}
+function changeToday(delta){ state.todayViewDate.setDate(state.todayViewDate.getDate() + delta); renderStaff(); }
+
+function renderStaff(){
+    const contTable = document.getElementById('staffContainer'); const contToday = document.getElementById('todayContainer'); const contAgenda = document.getElementById('agendaContainer');
+    if(!contTable || !contToday || !contAgenda) return;
+
+    contTable.classList.add('desktop-only');
+    
+    if (state.staffSubview === 'today') { contToday.classList.remove('hidden'); contAgenda.classList.add('hidden'); renderTodayView(); } 
+    else if (state.staffSubview === 'agenda') { contAgenda.classList.remove('hidden'); contToday.classList.add('hidden'); renderWeeklyAgenda(); }
+
+    const dates = visibleDates(); document.getElementById('staffPeriodTitle').textContent = periodLabel(dates);
+    let html='<table><thead><tr><th>Dipendente</th>';
+    dates.forEach(d=>html+=`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`); html+='</tr></thead><tbody>';
+    employees.forEach(emp=>{
+        const isMe = emp.id === getProposedEmpId();
+        html+=`<tr ${isMe?'style="background:#f0f7ff"':''}><td><span class="dot" style="background:${emp.color}"></span><b>${emp.name}</b></td>`;
+        dates.forEach(d=>{
+            const s=state.shifts[dateKey(d)]?.[emp.id]?.shift || '-';
+            let badgeClass = ''; 
+            if(s === 'riposo') badgeClass = 'warn'; 
+            else if(['ferie','permesso','malattia'].includes(s)) badgeClass = 'bad'; 
+            else if(parkShifts.includes(s)) badgeClass = 'park'; 
+            else if(s !== '-' && s !== 'none') badgeClass = 'ok';
+            html+=`<td class="${dayColumnClass(d)}"><span class="badge ${badgeClass}">${s==='none'?'-':s}</span></td>`;
+        });
+        html+='</tr>';
+    });
+    contTable.innerHTML = html + '</tbody></table>';
+}
+
+function renderTodayView(){
+    const cont = document.getElementById('todayContainer');
+    const d = state.todayViewDate; const k = dateKey(d); const myEmpId = getProposedEmpId();
+    const isOggi = dateKey(new Date()) === k;
+    const dateLabel = isOggi ? "OGGI, " + d.toLocaleDateString('it-IT', {day:'2-digit', month:'short'}) : d.toLocaleDateString('it-IT', {weekday:'short', day:'2-digit', month:'short'});
+
+    let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:#f8fafc; padding:8px; border-radius:12px; border:1px solid #e2e8f0;">
+        <button style="padding:8px 12px; background:white; border:1px solid #cbd5e1; color:var(--text);" onclick="changeToday(-1)">◀</button>
+        <h3 style="margin:0; font-size:14px; text-transform:uppercase;">${dateLabel}</h3>
+        <button style="padding:8px 12px; background:white; border:1px solid #cbd5e1; color:var(--text);" onclick="changeToday(1)">▶</button>
+    </div>`;
+
+    if(myEmpId && state.currentUser.role !== 'segreteria') {
+        let myShift = state.shifts[k]?.[myEmpId]?.shift || 'none'; if(myShift === 'none' || myShift === '-') myShift = 'Riposo';
+        let b = 'var(--primary)'; 
+        if(['Riposo','riposo'].includes(myShift)) b = 'var(--warn)'; 
+        else if(['ferie','permesso','malattia'].includes(myShift)) b = 'var(--bad)';
+        else if(parkShifts.includes(myShift)) b = 'var(--park)';
+
+        html += `<div style="background:white; border-left:5px solid ${b}; padding:18px; border-radius:14px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border);">
+            <div style="font-size:12px; font-weight:700; color:${b}; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">Il Tuo Turno</div>
+            <div style="font-size:24px; font-weight:800; color:${b};">${myShift}</div>
+        </div>`;
+    }
+
+    html += `<div><div style="font-size:12px; font-weight:700; color:var(--text-light); margin-bottom:12px; letter-spacing:0.5px;">👥 SQUADRA OPERATIVA (Presenti)</div>`;
+    let count = 0;
+    employees.forEach(emp => {
+        if(emp.id === myEmpId) return;
+        const s = state.shifts[k]?.[emp.id]?.shift;
+        if(s && s !== 'none' && s !== 'riposo' && !['ferie','permesso','malattia','-'].includes(s)) {
+            count++;
+            let sBg = '#eef2ff', sCol = 'var(--primary)';
+            if(parkShifts.includes(s)) { sBg = '#e0f2fe'; sCol = 'var(--park)'; }
+
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border-radius:12px; margin-bottom:8px; border:1px solid #e9eef5;">
+                <div><span class="dot" style="background:${emp.color}"></span><b style="font-size:15px; color:var(--text);">${emp.name}</b><br><small style="color:var(--text-light); font-weight:500; margin-left:18px;">${emp.roles[0].charAt(0).toUpperCase() + emp.roles[0].slice(1)}</small></div>
+                <div style="font-weight:700; font-size:14px; color:${sCol}; background:${sBg}; padding:8px 12px; border-radius:10px;">${s}</div>
+            </div>`;
+        }
+    });
+    if(count === 0) html += `<div style="padding:20px; text-align:center; color:var(--text-light); font-size:14px; font-style:italic; background:white; border-radius:14px; border:1px solid #e9eef5;">Nessun collega segnato operativo.</div>`;
+    cont.innerHTML = html + `</div>`;
+}
+
+function renderWeeklyAgenda() {
+    const cont = document.getElementById('agendaContainer');
+    const dates = visibleDates(); const myEmpId = getProposedEmpId();
+    let html = `<div class="small" style="font-weight:700; color:var(--primary); margin-bottom:14px; text-align:center;">${periodLabel(dates)}</div>`;
+
+    dates.forEach(d => {
+        const k = dateKey(d); const dn = d.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'short' });
+        let myS = myEmpId ? (state.shifts[k]?.[myEmpId]?.shift || 'none') : null;
+        if(myS === 'none' || myS === '-') myS = 'Riposo';
+        
+        let b = 'var(--primary)'; 
+        if(['Riposo','riposo'].includes(myS)) b = 'var(--warn)'; 
+        else if(['ferie','permesso','malattia'].includes(myS)) b = 'var(--bad)';
+        else if(parkShifts.includes(myS)) b = 'var(--park)';
+
+        html += `<div style="background:white; margin-bottom:14px; border-radius:14px; padding:14px; border:1px solid #e9eef5; ${dayColumnClass(d)?'background:#fff7ed; border-color:#fed7aa;':''}">
+            <div style="border-bottom:1px solid #e9eef5; padding-bottom:10px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <b style="text-transform:capitalize; font-size:15px; color:var(--text);">${dn}</b>
+                ${myEmpId && state.currentUser.role !== 'segreteria' ? `<div style="background:${b}; color:white; font-size:12px; font-weight:700; padding:6px 10px; border-radius:12px;">TU: ${myS}</div>` : ''}
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">`;
+        employees.forEach(emp => {
+            if(emp.id === myEmpId) return;
+            let s = state.shifts[k]?.[emp.id]?.shift || 'none'; if(s === 'none' || s === '-') s = 'Riposo';
+            let c = 'var(--text-light)', fw = '500';
+            
+            if(['ferie','permesso','malattia'].includes(s)) { c = 'var(--bad)'; }
+            else if(parkShifts.includes(s)) { c = 'var(--park)'; fw = '700'; }
+            else if(s !== 'Riposo') { c = 'var(--primary)'; fw = '700'; }
+
+            html += `<div style="background:#f8fafc; padding:8px 10px; border-radius:10px; font-size:13px; display:flex; justify-content:space-between; border:1px solid var(--border);">
+                <span style="font-weight:600;">${emp.name}</span> <span style="color:${c}; font-weight:${fw};">${s}</span>
+            </div>`;
+        });
+        html += `</div></div>`;
+    });
+    cont.innerHTML = html;
+}
+
+function updateShift(empId, date, val){
+    if(!state.shifts[date]) state.shifts[date]={}; state.shifts[date][empId] = {shift: val, role: employees.find(e=>e.id===empId).roles[0]}; touchUpdate('shifts'); updateNotificationDots();
+}
+function setManualShift(empId, date){ const val = prompt("Orario libero (es. 07:00-14:00)"); if(val){ updateShift(empId, date, val); renderPlanner(); } }
+function clearVisiblePeriod(){ if(confirm("Svuotare turni visibili?")){ visibleDates().forEach(d=>delete state.shifts[dateKey(d)]); touchUpdate('shifts'); renderAll(); } }
+function autoGenerateWeek(){
+    if(state.view !== 'week') return alert("Funziona solo in vista Settimana.");
+    if(!confirm("Replicare gli ormeggiatori dalla settimana scorsa?")) return;
+    visibleDates().forEach(d=>{
+        const k = dateKey(d); const prevK = dateKey(new Date(d.getTime() - 7*86400000));
+        if(!state.shifts[k]) state.shifts[k] = {};
+        employees.forEach(emp=>{
+            if(!emp.roles.includes('ormeggio') || emp.roles.includes('cassa')) return;
+            const cur = state.shifts[k][emp.id]?.shift; if(['ferie','permesso','malattia'].includes(cur)) return;
+            const prev = state.shifts[prevK]?.[emp.id]?.shift;
+            if(!prev || ['ferie','permesso','malattia','riposo','none','-'].includes(prev)) state.shifts[k][emp.id] = {shift:'none', role:'ormeggio'};
+            else state.shifts[k][emp.id] = {shift:prev, role:'ormeggio'};
+        });
+    });
+    touchUpdate('shifts'); renderAll(); toast("Turni replicati ✅");
+}
+async function addCustomShift(){
+    const val = prompt("Nuovo turno, es. 07:30-15:30"); if(!val) return;
+    if(!/^\d{2}[:.]\d{2}-\d{2}[:.]\d{2}$/.test(val.trim())) return alert("Formato errato.");
+    if(!state.customShiftOptions) state.customShiftOptions = {}; state.customShiftOptions[val.trim()] = val.trim();
+    touchUpdate('shifts'); renderAll(); await save('shifts'); toast("Turno aggiunto ✅");
+}
+async function deleteCustomShift(){
+    const keys = Object.keys(state.customShiftOptions || {}); if(!keys.length) return alert("Nessun turno custom.");
+    const index = prompt("Cancella numero:\n" + keys.map((k,i)=>`${i+1}) ${k}`).join('\n'));
+    if(!index || !keys[index-1]) return; delete state.customShiftOptions[keys[index-1]];
+    touchUpdate('shifts'); renderAll(); await save('shifts'); toast("Turno rimosso ✅");
+}
+
+function toggleRequestFields() {
+    const t = document.getElementById('requestType').value;
+    document.getElementById('fieldsFerie').classList.toggle('hidden', t !== 'Ferie');
+    document.getElementById('fieldsPermesso').classList.toggle('hidden', t === 'Ferie');
+}
+async function submitRequest(){
+    const btn = document.getElementById('btnSubmitReq'); btn.disabled = true;
+    const empId = document.getElementById('requestEmployee').value; const type = document.getElementById('requestType').value; const note = document.getElementById('requestNote').value;
+    let from, to, hours, minutes;
+    if (type === 'Ferie') { from = document.getElementById('requestFrom').value; to = document.getElementById('requestTo').value; if(!from || !to){ btn.disabled=false; return alert("Scegli le date!"); } } 
+    else { from = document.getElementById('requestDay').value; to = from; hours = document.getElementById('requestHours').value; minutes = document.getElementById('requestMinutes').value; if(!from){ btn.disabled=false; return alert("Scegli la data!"); } }
+    
+    try {
+        await load();
+        state.requests.unshift({ id: Date.now(), employeeId: empId, type, from, to, note, status: 'In attesa', hours: type==='Permesso'?hours:null, minutes: type==='Permesso'?minutes:null });
+        touchUpdate('requests'); await save(); toast("Richiesta inviata!"); document.getElementById('requestNote').value = "";
+    } catch(e) { alert("Errore invio."); } finally { btn.disabled = false; }
+}
+function renderRequests(){
+    const cont = document.getElementById('requestsList'); if(!cont) return;
+    const isMgr = ['manager', 'segreteria'].includes(state.currentUser.role);
+    const list = isMgr ? state.requests : state.requests.filter(r => r.employeeId === getProposedEmpId());
+    if(!list.length) return cont.innerHTML = "<div class='small' style='padding:16px; text-align:center; background:#f8fafc; border-radius:12px;'>Nessuna richiesta in storico.</div>";
+    cont.innerHTML = list.map(r => {
+        const dateHtml = (r.type === 'Permesso') ? `<small>Il ${formatDateIT(r.from)} - <b>${r.hours}h e ${r.minutes}m</b></small><br>` : `<small>Dal ${formatDateIT(r.from)} al ${formatDateIT(r.to)}</small><br>`;
+        return `<div class="request-item">
+            <b style="font-size:15px; color:var(--primary);">${r.type}</b> - ${employeeName(r.employeeId)}<br>${dateHtml}
+            ${r.note ? `<div style="margin-top:8px; padding:10px; background:white; border-radius:8px; font-size:13px; color:var(--text); border:1px solid var(--border);">"${r.note}"</div>` : ''}
+            <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span class="badge ${r.status==='Approvata'?'ok':(r.status==='Respinta'?'bad':'warn')}">${r.status}</span>
+                ${isMgr && r.status==='In attesa' ? `<div><button class="green" style="padding:6px 12px; font-size:12px" onclick="approveReq(${r.id}, 'Approvata')">Approva</button> <button class="red" style="padding:6px 12px; font-size:12px; margin-left:4px;" onclick="approveReq(${r.id}, 'Respinta')">Nega</button></div>`:''}
+            </div>
+        </div>`;
+    }).join('');
+}
+async function approveReq(id, status){
+    const r = state.requests.find(x=>x.id===id); if(!r) return;
+    r.status = status; touchUpdate('requests');
+    if(status === 'Approvata'){ let d = new Date(r.from); while(d <= new Date(r.to)){ updateShift(r.employeeId, dateKey(d), r.type.toLowerCase()); d.setDate(d.getDate()+1); } }
+    await save();
+}
+
+async function submitSick(){
+    const empId = document.getElementById('sickEmployee').value; const from = document.getElementById('sickFrom').value; const to = document.getElementById('sickTo').value;
+    if(!from || !to) return alert("Inserisci date.");
+    let d = new Date(from); while(d <= new Date(to)){ updateShift(empId, dateKey(d), 'malattia'); d.setDate(d.getDate()+1); }
+    state.sick.unshift({empId, from, to}); await save('sick');
+}
+function renderSick(){
+    const cont = document.getElementById('sickList'); if(!cont) return;
+    cont.innerHTML = state.sick.length ? state.sick.map(s=>`<div class="request-item"><b style="font-size:14px;">${employeeName(s.empId)}</b><br><small>Dal ${formatDateIT(s.from)} al ${formatDateIT(s.to)}</small></div>`).join('') : "<div class='small' style='padding:16px; text-align:center; background:#f8fafc; border-radius:12px;'>Nessun registro.</div>";
+}
+async function saveServiceNote(){
+    const d = document.getElementById('noteDate').value; const t = document.getElementById('noteText').value.trim();
+    if(!d || !t) return alert("Compila data e testo.");
+    if(!state.notes[d]) state.notes[d] = []; if(!Array.isArray(state.notes[d])) state.notes[d] = [state.notes[d]];
+    state.notes[d].push({ id: Date.now(), text: t, author: state.currentUser.name, createdAt: new Date().toISOString() });
+    await save('notes'); document.getElementById('noteText').value = "";
+}
+function renderNotes(){
+    const cont = document.getElementById('notesList'); if(!cont) return;
+    const entries = Object.entries(state.notes || {}).sort().reverse();
+    if(!entries.length) return cont.innerHTML = "<div class='small' style='padding:16px; text-align:center; background:#f8fafc; border-radius:12px;'>Nessuna nota in bacheca.</div>";
+    cont.innerHTML = entries.map(([d, notes])=>{
+        if(!Array.isArray(notes)) notes = [notes];
+        const notesHtml = notes.map(n=>`<div class="request-item" style="border-left:5px solid var(--warn); background:white;">
+            <div style="font-size:14px; font-weight:600; color:var(--text); margin-bottom:8px;">${n.text}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;"><small style="font-weight:600;">Autore: ${n.author}</small>${state.currentUser.role==='manager'?`<button class="red" style="padding:4px 8px; font-size:11px" onclick="deleteNote('${d}', ${n.id})">Rimuovi</button>`:''}</div>
+        </div>`).join('');
+        return `<div style="margin-bottom:16px"><h3 style="color:var(--primary); font-size:15px; margin-bottom:8px; border-bottom:2px solid var(--border); padding-bottom:4px; display:inline-block;">Data: ${formatDateIT(d)}</h3>${notesHtml}</div>`;
+    }).join('');
+}
+async function deleteNote(d, noteId){
+    if(!state.notes[d]) return; state.notes[d] = state.notes[d].filter(n => n.id !== noteId);
+    if(!state.notes[d].length) delete state.notes[d]; await save('notes');
+}
+
+function orderedShiftEntries(options){
+    const entries = Object.entries(options || {});
+    const isTime = v => /^\d{2}[:.]\d{2}-\d{2}[:.]\d{2}$/.test(v);
+    const mins = v => { const [h,m] = v.split('-')[0].split(/[:.]/).map(Number); return h*60+m; };
+    const absenceOrder = { riposo: 1, ferie: 2, permesso: 3, malattia: 4 };
+    return [
+        ...entries.filter(([v]) => v === 'none'),
+        ...entries.filter(([v]) => isTime(v)).sort(([a], [b]) => mins(a) - mins(b)),
+        ...entries.filter(([v]) => absenceOrder[v]).sort(([a], [b]) => absenceOrder[a] - absenceOrder[b]),
+        ...entries.filter(([v]) => v !== 'none' && !isTime(v) && !absenceOrder[v])
+    ];
+}
+function formatDateIT(v){ const p = String(v).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : v; }
+function easterDate(y){ const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451); return new Date(y, Math.floor((h+l-7*m+114)/31)-1, ((h+l-7*m+114)%31)+1); }
+function isItalianHoliday(d){ const k=`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; if(['01-01','01-06','04-25','05-01','06-02','08-15','11-01','12-08','12-25','12-26'].includes(k)) return true; const eM=new Date(easterDate(d.getFullYear())); eM.setDate(eM.getDate()+1); return dateKey(d)===dateKey(eM); }
+function dayColumnClass(d){ const w=d.getDay(); return (w===0||w===6||isItalianHoliday(d)) ? 'special-day-col' : ''; }
+function visibleDates(){ let d=new Date(state.currentDate); if(state.view==='week'){ d.setDate(d.getDate() - (d.getDay()+6)%7 + state.weekOffset*7); return Array.from({length:7}, (_,i)=>{ const x=new Date(d); x.setDate(x.getDate()+i); return x; }); } else { const last=new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); return Array.from({length:last}, (_,i)=>new Date(d.getFullYear(), d.getMonth(), i+1)); } }
+function dateKey(d){ return d.toISOString().split('T')[0]; }
+function dayHeader(d){ return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit'}); }
+function periodLabel(dates){ return dates[0].toLocaleDateString() + " - " + dates[dates.length-1].toLocaleDateString(); }
+function employeeHours(id, dates){ return dates.reduce((sum, d)=> sum + shiftHours(state.shifts[dateKey(d)]?.[id]?.shift), 0); }
+function shiftHours(s){ if(!s || ['riposo','ferie','permesso','malattia','none','-'].includes(s)) return 0; const p=s.split('-'); if(!p[0]||!p[1]) return 0; const [h1,m1]=p[0].split(/[:.]/).map(Number); const [h2,m2]=p[1].split(/[:.]/).map(Number); return ((h2*60+m2)-(h1*60+m1)-30)/60; }
+function employeeName(id){ return employees.find(e=>e.id===id)?.name || id; }
+
+function fillEmployeeSelects(){
+    const myId = getProposedEmpId();
+    ['requestEmployee','sickEmployee'].forEach(id=>{
+        const el = document.getElementById(id); if(!el) return;
+        el.innerHTML = (state.currentUser.role === 'manager' || state.currentUser.role === 'segreteria') ? employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('') : `<option value="${myId}">${state.currentUser.name}</option>`;
+    });
+}
+function changeMonth(){ const [y,m]=document.getElementById('monthPicker').value.split('-'); state.currentDate=new Date(y, m-1, 1); state.weekOffset=0; renderAll(); }
+function movePeriod(n){ if(state.view==='week') state.weekOffset+=n; else state.currentDate.setMonth(state.currentDate.getMonth()+n); renderAll(); }
+function setView(v){ state.view=v; document.getElementById('view-week').classList.toggle('active', v==='week'); document.getElementById('view-month').classList.toggle('active', v==='month'); document.getElementById('staff-view-week').classList.toggle('active', v==='week'); document.getElementById('staff-view-month').classList.toggle('active', v==='month'); renderAll(); }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),3000); }
+
+// --- FUNZIONE PDF COMPLETA CON LOGICA DI SPALMATURA AUTOMATICA SUI FOGLI ---
+function exportStaffPDF(){
+    const title = "Marina Porto Antico - Turni Staff"; const period = document.getElementById('staffPeriodTitle')?.textContent || '';
+    const isMonth = state.view === 'month'; const dates = visibleDates();
+    
+    const fmt = s => {
+        if (!s || s==='none' || s==='-') return '-';
+        let clean = s.replace(' (Park)', '').replace(' park', '').replace(' Park', '');
+        if (clean.includes('-') && !['riposo','ferie','permesso','malattia'].includes(clean.toLowerCase())) {
+            return clean.replace('-', '<br>');
+        }
+        return clean;
+    };
+    
+    const buildTable = (dg, lbl) => `
+        <div class="split-title">${lbl}</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Staff</th>
+                    ${dg.map(d=>`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${employees.map(e=>`
+                    <tr>
+                        <td><span class="dot" style="background:${e.color}"></span><b>${e.name}</b></td>
+                        ${dg.map(d=>{
+                            let s=state.shifts[dateKey(d)]?.[e.id]?.shift; if(!s || s==='none') s='-'; 
+                            let b=''; 
+                            if(s==='riposo') b='warn'; 
+                            else if(['ferie','permesso','malattia'].includes(s)) b='bad'; 
+                            else if(parkShifts.includes(s)) b='park'; 
+                            else if(s!=='-') b='ok';
+                            return `<td class="${dayColumnClass(d)}"><span class="badge ${b}">${fmt(s)}</span></td>`;
+                        }).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>`;
+    
+    // Per il mese usiamo la classe "page-break" per separare i blocchi su due fogli distinti
+    let content = isMonth ? 
+        `${buildTable(dates.filter(d=>d.getDate()<=15),'Giorni 1 - 15')}<div class="page-break"></div>${buildTable(dates.filter(d=>d.getDate()>=16),'Giorni 16 - Fine Mese')}` 
+        : buildTable(dates,'Turni Settimanali');
+    
+    const html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<style>
+*{ box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; } 
+body{ padding:0; margin:0; background:white; color:#1f2d3d; } 
+.print-wrap{ padding:4mm; } 
+h1{ color:#082b4d; margin:0 0 1mm; font-size:20px; font-weight:800; letter-spacing:-0.5px; } 
+.sub{ color:#64748b; margin-bottom:2mm; font-size:12px; font-weight:600; } 
+.split-title{ font-size:11px; font-weight:700; color:#082b4d; margin:3mm 0 2mm; text-transform:uppercase; letter-spacing:0.5px; } 
+table{ width:100%; border-collapse:collapse; background:white; table-layout: auto; margin-bottom:4px; } 
+th,td{ border:1px solid #cbd5e1; text-align:center; padding:5px 2px; vertical-align:middle; } 
+th{ background:#082b4d; color:white; font-size:10px; font-weight:700; text-transform:uppercase; height:32px; } 
+td:first-child,th:first-child{ text-align:left; width:32mm; min-width:32mm; font-weight:bold; background:#f8fafc; font-size:12px; } 
+td { height:34px; font-size:12px; }
+.special-day-col{ background:#fff7ed!important; } 
+th.special-day-col{ background:#fed7aa!important; color:#7c2d12!important; } 
+
+.badge{ 
+    display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 26px; 
+    padding: 2px; border-radius: 6px; color: white; font-size: 10.5px; font-weight: 700; line-height: 1.1; 
+    text-align: center; word-break: normal;
+} 
+.ok { background: #16803c !important; }
+.warn { background: #d97706 !important; color: white !important; }
+.bad { background: #dc2626 !important; }
+.park { background: #0284c7 !important; } 
+
+.dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } 
+@media print{ 
+    @page{ size:A4 landscape; margin:6mm; } 
+    .print-wrap{ padding:0; } 
+    .page-break { page-break-after: always; height: 0; margin: 0; border: 0; }
+}
+</style>
+</head>
+<body>
+<div class="print-wrap">
+    <h1>⚓ Marina Porto Antico</h1>
+    <div class="sub">${title} | ${period}</div>
+    ${content}
+</div>
+<script>setTimeout(()=>window.print(),500);<\/script>
+</body>
+</html>`;
+
+    const w = window.open(URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8;'})), '_blank'); 
+    if(!w) alert("Popup bloccato. Abilita i popup per poter esportare il PDF.");
+}
+
+function exportAssenzeCSV(){
+    const y=state.currentDate.getFullYear(), m=state.currentDate.getMonth(); const days=Array.from({length:new Date(y,m+1,0).getDate()}, (_,i)=>new Date(y,m,i+1));
+    let csv = "\ufeffDipendente;Totale Ferie (gg);Giorni Ferie;Totale Permessi (ore);Dettaglio Permessi\n";
+    employees.forEach(emp => {
+        let fDays = []; days.forEach(d => { if(state.shifts[dateKey(d)]?.[emp.id]?.shift==='ferie') fDays.push(d.getDate()); });
+        let pMins = 0, pDet = [];
+        state.requests.forEach(r => {
+            const rd = new Date(r.from);
+            if(r.employeeId===emp.id && r.type==='Permesso' && r.status==='Approvata' && rd.getMonth()===m && rd.getFullYear()===y) {
+                const th = parseInt(r.hours||0), tm = parseInt(r.minutes||0); pMins+=(th*60)+tm; pDet.push(`${rd.getDate()} (${th}h${tm>0?tm+'m':''})`);
+            }
+        });
+        if(fDays.length || pMins) csv += `${emp.name};${fDays.length};"${fDays.join(', ')||'-'}";${pMins>0?Math.floor(pMins/60)+'h'+(pMins%60?pMins%60+'m':''):'0h'};"${pDet.join(', ')||'-'}"\n`;
+    });
+    const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); l.download=`Assenze_${m+1}_${y}.csv`; l.click(); toast("Esportato CSV 📊");
+}
+
+function exportAssenzePDF(){
+    const y=state.currentDate.getFullYear(), m=state.currentDate.getMonth(), lbl=state.currentDate.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+    const days=Array.from({length:new Date(y,m+1,0).getDate()}, (_,i)=>new Date(y,m,i+1)); let rows = '';
+    employees.forEach(emp => {
+        let fDays = []; days.forEach(d => { if(state.shifts[dateKey(d)]?.[emp.id]?.shift==='ferie') fDays.push(d.getDate()); });
+        let pMins = 0, pDet = [];
+        state.requests.forEach(r => {
+            const rd = new Date(r.from);
+            if(r.employeeId===emp.id && r.type==='Permesso' && r.status==='Approvata' && rd.getMonth()===m && rd.getFullYear()===y) {
+                const th = parseInt(r.hours||0), tm = parseInt(r.minutes||0); pMins+=(th*60)+tm; pDet.push(`${rd.getDate()} (${th}h${tm>0?tm+'m':''})`);
+            }
+        });
+        if(fDays.length || pMins) rows += `<tr><td><b>${emp.name}</b></td><td>${fDays.length?fDays.length+' gg':'-'}</td><td><small>${fDays.join(', ')}</small></td><td style="color:#082b4d;font-weight:bold;">${pMins>0?Math.floor(pMins/60)+'h'+(pMins%60?pMins%60+'m':''):'-'}</td><td><small>${pDet.join(', ')}</small></td></tr>`;
+    });
+    const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Report Assenze</title><style>body{font-family:sans-serif;padding:20px;} h1{color:#082b4d;font-size:20px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid #cbd5e1;padding:10px;text-align:center;font-size:12px;} th{background:#082b4d;color:white;} td:first-child{text-align:left;}</style></head><body><h1>⚓ Marina Porto Antico - Report Assenze</h1><p>Mese: <b>${lbl.toUpperCase()}</b></p><table><thead><tr><th rowspan="2">Dipendente</th><th colspan="2">Ferie</th><th colspan="2">Permessi</th></tr><tr><th>Totale</th><th>Giorni</th><th>Totale Ore</th><th>Dettaglio</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nessuna assenza</td></tr>'}</tbody></table><script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
+    const w = window.open(URL.createObjectURL(new Blob([html], {type:'text/html'})), '_blank'); if(!w) alert("Popup bloccato.");
+}
+
+async function notifyShiftChange(){
+    if(state.currentUser.role !== 'manager') return;
+    const period = periodLabel(visibleDates());
+    if(!confirm(`Inviare notifica Telegram?\n\nPeriodo: ${period}`)) return;
+    try{
+        toast("Invio..."); const res = await fetch(TELEGRAM_NOTIFY_ENDPOINT, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({sender:state.currentUser.name, period, view:state.view}) });
+        if(!res.ok) throw new Error(); toast("Notifica inviata ✅");
+    }catch(e){ toast("Errore invio ❌"); }
+}
+
+// Check session al caricamento della pagina
+checkSession();
+
+</script>
+</body>
+</html>
