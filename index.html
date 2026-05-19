@@ -7,6 +7,21 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marina Turni">
 <title>Marina Porto Antico - Gestionale Turni</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#082b4d">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/10005/10005116.png">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then(registration => {
+        console.log('ServiceWorker registrato con successo');
+      }).catch(err => {
+        console.log('Registrazione ServiceWorker fallita: ', err);
+      });
+    });
+  }
+</script>
 <style>
 /* --- VARIABILI E STILI MODERNI (App Look) --- */
 :root {
