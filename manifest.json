@@ -1,0 +1,17 @@
+{
+  "name": "Marina Porto Antico Turni",
+  "short_name": "Marina Turni",
+  "description": "Gestionale Turni Staff - Marina Porto Antico",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#082b4d",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10005/10005116.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
