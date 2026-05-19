@@ -1,4 +1,4 @@
-const CACHE_NAME = 'marina-turni-v1';
+const CACHE_NAME = 'marina-turni-v2';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
