@@ -764,7 +764,12 @@ function renderWeeklyAgenda() {
     const dates = visibleDates(); 
     const myEmpId = getProposedEmpId();
     
-    let html = `<div class="small" style="font-weight:700; color:var(--primary); margin-bottom:16px; text-align:center; text-transform:uppercase; letter-spacing:0.8px; font-size:13px;">${periodLabel(dates)}</div>`;
+    // CORREZIONE: Aggiunti i pulsanti di navigazione speculari a "Vista Oggi"
+    let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; background:#f8fafc; padding:8px; border-radius:12px; border:1px solid #e2e8f0;">
+        <button style="padding:8px 12px; background:white; border:1px solid #cbd5e1; color:var(--text);" onclick="movePeriod(-1)">◀</button>
+        <h3 style="margin:0; font-size:13px; text-transform:uppercase; color:var(--primary); font-weight:700; letter-spacing:0.5px;">${periodLabel(dates)}</h3>
+        <button style="padding:8px 12px; background:white; border:1px solid #cbd5e1; color:var(--text);" onclick="movePeriod(1)">▶</button>
+    </div>`;
 
     dates.forEach(d => {
         const k = dateKey(d); 
