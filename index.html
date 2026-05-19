@@ -7,21 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marina Turni">
 <title>Marina Porto Antico - Gestionale Turni</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#082b4d">
-<link rel="apple-touch-icon" href="https://img.icons8.com/color/512/anchor.png">
-
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').then(registration => {
-        console.log('ServiceWorker registrato con successo');
-      }).catch(err => {
-        console.log('Registrazione ServiceWorker fallita: ', err);
-      });
-    });
-  }
-</script>
 <style>
 /* --- VARIABILI E STILI MODERNI (App Look) --- */
 :root {
@@ -230,7 +215,7 @@ th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; 
         <button id="staff-view-month" onclick="setView('month')">Mese</button>
         <button onclick="movePeriod(-1)">◀ Prec</button>
         <button onclick="movePeriod(1)">Succ ▶</button>
-        <button class="primary" onclick="exportStaffPDF()">📄 Esporta Tabellone (PDF)</button>
+        <button class="primary" onclick="exportStaffPDF()">📄 Esporta Tabellone</button>
       </div>
 
       <div id="staffPeriodTitle" class="small desktop-only" style="margin-bottom:12px; font-weight:bold; color:var(--primary);"></div>
@@ -262,8 +247,8 @@ th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; 
           <label>Giorno del permesso</label>
           <input id="requestDay" type="date" style="margin-bottom:12px">
           <div style="display:flex; gap:10px; margin-bottom:12px;">
-            <div style="flex:1"><label>Ore</label><select id="requestHours"><option value="0">0 ore</option><option value="1">1 ora</option><option value="2">2 ore</option><option value="3">3 ore</option><option value="4">4 ore</option><option value="5">5 ore</option><option value="6">6 ore</option><option value="7">7 ore</option><option value="8">8 ore</option></select></div>
-            <div style="flex:1"><label>Minuti</label><select id="requestMinutes"><option value="0">00 min</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option></select></div>
+            <div style="flex:1"><label>Ore</label><select id="requestHours"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></div>
+            <div style="flex:1"><label>Minuti</label><select id="requestMinutes"><option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select></div>
           </div>
         </div>
         <label>Note / Motivazione</label>
@@ -538,7 +523,7 @@ async function save(section) {
 
 function getProposedEmpId() { return state.currentUser ? (state.currentUser.employeeId || (state.currentUser.username === 'gabriele' ? 'gabriele' : null)) : null; }
 
-// --- LOGICA LOGIN & NAVIGAZIONE CORRETTA ---
+// --- LOGICA LOGIN ---
 function updateNavBarVisibility(isManager) {
     const plannerNav = document.getElementById('nav-planner');
     if (plannerNav) plannerNav.classList.toggle('hidden-all', !isManager);
@@ -679,6 +664,7 @@ function renderStaff(){
     contTable.innerHTML = html + '</tbody></table>';
 }
 
+// CORREZIONE VISTA OGGI
 function renderTodayView(){
     const cont = document.getElementById('todayContainer');
     const d = state.todayViewDate; const k = dateKey(d); const myEmpId = getProposedEmpId();
@@ -715,7 +701,8 @@ function renderTodayView(){
             if(parkShifts.includes(s)) badgeClass = 'park';
             let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
 
-            if (parkShifts.includes(s) || emp.roles.includes('cassa')) cassaPark.push(item);
+            // CORREZIONE LOGICA QUI
+            if (parkShifts.includes(s) || emp.roles[0] === 'cassa') cassaPark.push(item);
             else ormeggiatori.push(item);
         }
     });
@@ -752,21 +739,31 @@ function renderTodayView(){
     cont.innerHTML = html + `</div>`;
 }
 
+// CORREZIONE VISTA AGENDA
 function renderWeeklyAgenda() {
     const cont = document.getElementById('agendaContainer');
     if(!cont) return;
-    if (state.staffSubview !== 'agenda' || window.innerWidth > 768) { cont.classList.add('hidden'); return; }
+    if (state.staffSubview !== 'agenda' || window.innerWidth > 768) {
+        cont.classList.add('hidden');
+        return;
+    }
     cont.classList.remove('hidden');
 
-    const dates = visibleDates(); const myEmpId = getProposedEmpId();
+    const dates = visibleDates(); 
+    const myEmpId = getProposedEmpId();
+    
     let html = `<div class="small" style="font-weight:700; color:var(--primary); margin-bottom:16px; text-align:center; text-transform:uppercase; letter-spacing:0.8px; font-size:13px;">${periodLabel(dates)}</div>`;
 
     dates.forEach(d => {
-        const k = dateKey(d); const dn = d.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'short' });
+        const k = dateKey(d); 
+        const dn = d.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'short' });
         
-        let myS = null; let b = 'var(--primary)';
+        let myS = null; 
+        let b = 'var(--primary)';
+        
         if (myEmpId) {
-            myS = state.shifts[k]?.[myEmpId]?.shift || 'none'; if(myS === 'none' || myS === '-') myS = 'Riposo';
+            myS = state.shifts[k]?.[myEmpId]?.shift || 'none'; 
+            if(myS === 'none' || myS === '-') myS = 'Riposo';
             if(['Riposo','riposo'].includes(myS)) b = 'var(--warn)'; 
             else if(['ferie','permesso','malattia'].includes(myS.toLowerCase())) b = 'var(--bad)';
             else if(parkShifts.includes(myS)) b = 'var(--park)';
@@ -784,7 +781,8 @@ function renderWeeklyAgenda() {
         
         employees.forEach(emp => {
             if(emp.id === myEmpId) return;
-            let s = state.shifts[k]?.[emp.id]?.shift || 'none'; if(s === 'none' || s === '-') s = 'Riposo';
+            let s = state.shifts[k]?.[emp.id]?.shift || 'none'; 
+            if(s === 'none' || s === '-') s = 'Riposo';
             
             let isAbsence = ['riposo', 'ferie', 'permesso', 'malattia'].includes(s.toLowerCase());
             let badgeClass = 'ok';
@@ -794,11 +792,17 @@ function renderWeeklyAgenda() {
 
             let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
 
-            if (isAbsence) { assenti.push(item); } 
-            else if (parkShifts.includes(s) || emp.roles.includes('cassa')) { cassaPark.push(item); } 
-            else { ormeggiatori.push(item); }
+            // CORREZIONE LOGICA QUI
+            if (isAbsence) {
+                assenti.push(item);
+            } else if (parkShifts.includes(s) || emp.roles[0] === 'cassa') {
+                cassaPark.push(item);
+            } else {
+                ormeggiatori.push(item);
+            }
         });
 
+        // Canale 1: Ormeggiatori
         if(ormeggiatori.length > 0) {
             html += `<div style="margin-bottom:14px;">
                 <div style="font-size:11px; font-weight:800; color:var(--primary); letter-spacing:0.5px; margin-bottom:6px;">⚓ DECK / ORMEGGIO</div>`;
@@ -811,6 +815,7 @@ function renderWeeklyAgenda() {
             html += `</div>`;
         }
 
+        // Canale 2: Cassa & Park
         if(cassaPark.length > 0) {
             html += `<div style="margin-bottom:14px;">
                 <div style="font-size:11px; font-weight:800; color:var(--park); letter-spacing:0.5px; margin-bottom:6px;">🚙 CASSA & PARKING</div>`;
@@ -823,6 +828,7 @@ function renderWeeklyAgenda() {
             html += `</div>`;
         }
 
+        // Canale 3: Assenze
         if(assenti.length > 0) {
             html += `<div style="border-top:1px dashed #e2e8f0; padding-top:10px; margin-top:6px;">
                 <div style="font-size:11px; font-weight:800; color:var(--text-light); margin-bottom:6px; letter-spacing:0.5px;">🌴 ASSENTI / RIPOSO:</div>
