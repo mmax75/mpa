@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Marina Turni">
 <title>Marina Porto Antico - Gestionale Turni</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#082b4d">
+<link rel="apple-touch-icon" href="https://img.icons8.com/color/512/anchor.png">
+
 <style>
 /* --- VARIABILI E STILI MODERNI (App Look) --- */
 :root {
@@ -308,6 +313,17 @@ th.special-day-col { background: #fed7aa !important; color: #7c2d12 !important; 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(registration => {
+      console.log('ServiceWorker registrato con successo');
+    }).catch(err => {
+      console.log('Registrazione ServiceWorker fallita: ', err);
+    });
+  });
+}
+
 // --- FUNZIONI DI SICUREZZA PER LOCALSTORAGE ---
 function safeGetItem(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
 function safeSetItem(key, val) { try { localStorage.setItem(key, val); } catch(e) {} }
@@ -523,7 +539,7 @@ async function save(section) {
 
 function getProposedEmpId() { return state.currentUser ? (state.currentUser.employeeId || (state.currentUser.username === 'gabriele' ? 'gabriele' : null)) : null; }
 
-// --- LOGICA LOGIN ---
+// --- LOGICA LOGIN E NAVIGAZIONE ---
 function updateNavBarVisibility(isManager) {
     const plannerNav = document.getElementById('nav-planner');
     if (plannerNav) plannerNav.classList.toggle('hidden-all', !isManager);
@@ -626,7 +642,6 @@ function shiftEditor(emp, date, shift){
     return html;
 }
 
-// --- VISTA STAFF E AGENDA CELLULARE RAGGRUPPATA E ORDINATA ---
 function setStaffSubview(type) {
     state.staffSubview = type;
     document.getElementById('btn-subview-today').classList.toggle('active', type === 'today');
@@ -664,7 +679,6 @@ function renderStaff(){
     contTable.innerHTML = html + '</tbody></table>';
 }
 
-// CORREZIONE VISTA OGGI
 function renderTodayView(){
     const cont = document.getElementById('todayContainer');
     const d = state.todayViewDate; const k = dateKey(d); const myEmpId = getProposedEmpId();
@@ -701,7 +715,6 @@ function renderTodayView(){
             if(parkShifts.includes(s)) badgeClass = 'park';
             let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
 
-            // CORREZIONE LOGICA QUI
             if (parkShifts.includes(s) || emp.roles[0] === 'cassa') cassaPark.push(item);
             else ormeggiatori.push(item);
         }
@@ -739,7 +752,6 @@ function renderTodayView(){
     cont.innerHTML = html + `</div>`;
 }
 
-// CORREZIONE VISTA AGENDA
 function renderWeeklyAgenda() {
     const cont = document.getElementById('agendaContainer');
     if(!cont) return;
@@ -792,7 +804,6 @@ function renderWeeklyAgenda() {
 
             let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
 
-            // CORREZIONE LOGICA QUI
             if (isAbsence) {
                 assenti.push(item);
             } else if (parkShifts.includes(s) || emp.roles[0] === 'cassa') {
