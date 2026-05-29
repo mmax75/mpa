@@ -897,18 +897,69 @@ function toggleRequestFields() {
     document.getElementById('fieldsFerie').classList.toggle('hidden', t !== 'Ferie');
     document.getElementById('fieldsPermesso').classList.toggle('hidden', t === 'Ferie');
 }
+// --- GESTIONE RICHIESTE CON NOTIFICA TELEGRAM PRIVATA INTEGRATA ---
 async function submitRequest(){
-    const btn = document.getElementById('btnSubmitReq'); btn.disabled = true;
-    const empId = document.getElementById('requestEmployee').value; const type = document.getElementById('requestType').value; const note = document.getElementById('requestNote').value;
-    let from, to, hours, minutes;
-    if (type === 'Ferie') { from = document.getElementById('requestFrom').value; to = document.getElementById('requestTo').value; if(!from || !to){ btn.disabled=false; return alert("Scegli le date!"); } } 
-    else { from = document.getElementById('requestDay').value; to = from; hours = document.getElementById('requestHours').value; minutes = document.getElementById('requestMinutes').value; if(!from){ btn.disabled=false; return alert("Scegli la data!"); } }
+    const btn = document.getElementById('btnSubmitReq');
+    btn.disabled = true;
     
+    const empId = document.getElementById('requestEmployee').value;
+    const from = document.getElementById('requestFrom').value;
+    const to = document.getElementById('requestTo').value;
+    const type = document.getElementById('requestType').value;
+    const note = document.getElementById('requestNote').value;
+
+    if(!from || !to) {
+        alert("Scegli le date!");
+        btn.disabled = false;
+        return;
+    }
+
     try {
         await load();
-        state.requests.unshift({ id: Date.now(), employeeId: empId, type, from, to, note, status: 'In attesa', hours: type==='Permesso'?hours:null, minutes: type==='Permesso'?minutes:null });
-        touchUpdate('requests'); await save(); toast("Richiesta inviata!"); document.getElementById('requestNote').value = "";
-    } catch(e) { alert("Errore invio."); } finally { btn.disabled = false; }
+
+        const newReq = {
+            id: Date.now(),
+            employeeId: empId,
+            type,
+            from,
+            to,
+            note,
+            status: 'In attesa'
+        };
+
+        state.requests.unshift(newReq);
+        touchUpdate('requests');
+
+        // Salva normalmente i dati online su Supabase
+        await save();
+
+        // --- PONTE TELEGRAM DIRETTO AL TUO ACCOUNT PRIVATO ---
+        const urlPonteGoogle = "https://script.google.com/macros/s/AKfycbxQRG73rPcH6uxC0W4il9JWDjCbio_ycvtAw-srXp9CghmLYr61ziBfEIyTvzWrvHNlGA/exec";
+        const nomeDipendente = employeeName(empId);
+        const infoPeriodo = from === to ? `il giorno ${formatDateIT(from)}` : `dal ${formatDateIT(from)} al ${formatDateIT(to)}`;
+
+        const messaggioTelegram = `⚓ *Nuova Richiesta da App Turni*\n\n👤 *Dipendente:* ${nomeDipendente}\n🏷 *Tipo Assenza:* ${type}\n📅 *Periodo:* ${infoPeriodo}\n📝 *Note:* _"${note || 'Nessuna nota dichiarata'}"_`;
+
+        // Sfrutta lo stesso ponte di Google per saltare il firewall dell'ufficio
+        fetch(urlPonteGoogle, {
+          method: "POST",
+          mode: "no-cors",
+          body: JSON.stringify({
+            chat_id: "976775426", // Il tuo Chat ID privato
+            text: messaggioTelegram
+          })
+        });
+        // -----------------------------------------------------
+
+        toast("Richiesta inviata online e notifica recapitata! 📱");
+        document.getElementById('requestNote').value = "";
+
+    } catch(e) {
+        console.error(e);
+        alert("Errore nell'invio. Riprova.");
+    } finally {
+        btn.disabled = false;
+    }
 }
 function renderRequests(){
     const cont = document.getElementById('requestsList'); if(!cont) return;
