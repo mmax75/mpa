@@ -1037,7 +1037,12 @@ function easterDate(y){ const a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor
 function isItalianHoliday(d){ const k=`${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; if(['01-01','01-06','04-25','05-01','06-02','08-15','11-01','12-08','12-25','12-26'].includes(k)) return true; const eM=new Date(easterDate(d.getFullYear())); eM.setDate(eM.getDate()+1); return dateKey(d)===dateKey(eM); }
 function dayColumnClass(d){ const w=d.getDay(); return (w===0||w===6||isItalianHoliday(d)) ? 'special-day-col' : ''; }
 function visibleDates(){ let d=new Date(state.currentDate); if(state.view==='week'){ d.setDate(d.getDate() - (d.getDay()+6)%7 + state.weekOffset*7); return Array.from({length:7}, (_,i)=>{ const x=new Date(d); x.setDate(x.getDate()+i); return x; }); } else { const last=new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); return Array.from({length:last}, (_,i)=>new Date(d.getFullYear(), d.getMonth(), i+1)); } }
-function dateKey(d){ return d.toISOString().split('T')[0]; }
+function dateKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
 function dayHeader(d){ return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit'}); }
 function periodLabel(dates){ return dates[0].toLocaleDateString() + " - " + dates[dates.length-1].toLocaleDateString(); }
 function employeeHours(id, dates){ return dates.reduce((sum, d)=> sum + shiftHours(state.shifts[dateKey(d)]?.[id]?.shift), 0); }
