@@ -981,7 +981,17 @@ function renderRequests(){
 async function approveReq(id, status){
     const r = state.requests.find(x=>x.id===id); if(!r) return;
     r.status = status; touchUpdate('requests');
-    if(status === 'Approvata'){ let d = new Date(r.from); while(d <= new Date(r.to)){ updateShift(r.employeeId, dateKey(d), r.type.toLowerCase()); d.setDate(d.getDate()+1); } }
+    if(status === 'Approvata'){
+        let d = new Date(r.from);
+        while(d <= new Date(r.to)){
+            const k = dateKey(d);
+            const cur = (state.shifts[k]?.[r.employeeId]?.shift || '').toLowerCase();
+            if(!['riposo','malattia'].includes(cur)){
+                updateShift(r.employeeId, k, r.type.toLowerCase());
+            }
+            d.setDate(d.getDate()+1);
+        }
+    }
     await save();
 }
 
