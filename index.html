@@ -74,6 +74,12 @@ td:first-child, th:first-child { text-align: left; font-weight: bold; min-width:
 .small { font-size: 12px; color: var(--text-light); }
 .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
 
+/* Marker Permesso (pallino rosso + ore) */
+.perm-marker { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 5px; }
+.perm-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); display: inline-block; box-shadow: 0 0 0 2px rgba(220,38,38,0.18); flex-shrink: 0; }
+.perm-txt { font-size: 10px; font-weight: 800; color: var(--bad); letter-spacing: 0.2px; }
+.perm-inline { display: inline-flex; align-items: center; gap: 6px; background: #fef2f2; color: var(--bad); padding: 5px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; }
+
 /* Varie Layout */
 .login-wrap { min-height: 90vh; display: flex; align-items: center; justify-content: center; }
 .login-card { max-width: 400px; width: 100%; text-align: center; }
@@ -624,7 +630,7 @@ function renderPlanner(){
     dates.forEach(d=>html+=`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`); html+='<th>Ore</th></tr></thead><tbody>';
     employees.forEach(emp=>{
         html+=`<tr><td><span class="dot" style="background:${emp.color}"></span><b>${emp.name}</b></td>`;
-        dates.forEach(d=>{ const k=dateKey(d); const current = state.shifts[k]?.[emp.id]?.shift || 'none'; html+=`<td class="${dayColumnClass(d)}">${shiftEditor(emp, k, current)}</td>`; });
+        dates.forEach(d=>{ const k=dateKey(d); const current = state.shifts[k]?.[emp.id]?.shift || 'none'; html+=`<td class="${dayColumnClass(d)}">${shiftEditor(emp, k, current)}${permMarkerHTML(emp.id, k)}</td>`; });
         html+=`<td style="font-weight:bold">${employeeHours(emp.id, dates).toFixed(1)}</td></tr>`;
     });
     cont.innerHTML = html + '</tbody></table>';
@@ -666,13 +672,14 @@ function renderStaff(){
         const isMe = emp.id === getProposedEmpId();
         html+=`<tr ${isMe?'style="background:#f0f7ff"':''}><td><span class="dot" style="background:${emp.color}"></span><b>${emp.name}</b></td>`;
         dates.forEach(d=>{
-            const s=state.shifts[dateKey(d)]?.[emp.id]?.shift || '-';
+            const k = dateKey(d);
+            const s=state.shifts[k]?.[emp.id]?.shift || '-';
             let badgeClass = ''; 
             if(s === 'riposo') badgeClass = 'warn'; 
             else if(['ferie','permesso','malattia'].includes(s.toLowerCase())) badgeClass = 'bad'; 
             else if(parkShifts.includes(s)) badgeClass = 'park'; 
             else if(s !== '-' && s !== 'none') badgeClass = 'ok';
-            html+=`<td class="${dayColumnClass(d)}"><span class="badge ${badgeClass}">${s==='none'?'-':s}</span></td>`;
+            html+=`<td class="${dayColumnClass(d)}"><span class="badge ${badgeClass}">${s==='none'?'-':s}</span>${permMarkerHTML(emp.id, k)}</td>`;
         });
         html+='</tr>';
     });
@@ -698,9 +705,11 @@ function renderTodayView(){
         else if(['ferie','permesso','malattia'].includes(myShift.toLowerCase())) b = 'var(--bad)';
         else if(parkShifts.includes(myShift)) b = 'var(--park)';
 
+        const myPerm = getPermessoForDay(myEmpId, k);
         html += `<div style="background:white; border-left:5px solid ${b}; padding:18px; border-radius:14px; margin-bottom:18px; box-shadow:0 4px 15px rgba(0,0,0,0.03); border: 1px solid var(--border);">
             <div style="font-size:12px; font-weight:700; color:${b}; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">Il Tuo Turno</div>
             <div style="font-size:24px; font-weight:800; color:${b};">${myShift}</div>
+            ${myPerm ? `<div class="perm-inline" style="margin-top:10px;"><span class="perm-dot"></span>Permesso ${permessoLabel(myPerm)}</div>` : ''}
         </div>`;
     }
 
@@ -713,7 +722,7 @@ function renderTodayView(){
         if(s && s !== 'none' && s !== 'riposo' && !['ferie','permesso','malattia','-'].includes(s.toLowerCase())) {
             let badgeClass = 'ok';
             if(parkShifts.includes(s)) badgeClass = 'park';
-            let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
+            let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass, perm: getPermessoForDay(emp.id, k) };
 
             if (parkShifts.includes(s) || emp.roles[0] === 'cassa') cassaPark.push(item);
             else ormeggiatori.push(item);
@@ -730,8 +739,8 @@ function renderTodayView(){
                 <div style="font-size:11px; font-weight:800; color:var(--primary); letter-spacing:0.5px; margin-bottom:6px;">⚓ DECK / ORMEGGIO</div>`;
             ormeggiatori.forEach(item => {
                 html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border-radius:12px; margin-bottom:8px; border:1px solid #e9eef5;">
-                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
-                    <div style="font-weight:700; font-size:14px; color:var(--primary); background:#eef2ff; padding:8px 12px; border-radius:10px;">${item.s}</div>
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b>${item.perm ? `<span class="perm-dot" style="margin-left:6px;" title="Permesso ${permessoLabel(item.perm)}"></span>` : ''}</div>
+                    <div style="font-weight:700; font-size:14px; color:var(--primary); background:#eef2ff; padding:8px 12px; border-radius:10px;">${item.s}${item.perm ? ` <span style="color:var(--bad); font-size:11px;">P ${permessoLabel(item.perm)}</span>` : ''}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -742,8 +751,8 @@ function renderTodayView(){
                 <div style="font-size:11px; font-weight:800; color:var(--park); letter-spacing:0.5px; margin-bottom:6px;">🚙 CASSA & PARKING</div>`;
             cassaPark.forEach(item => {
                 html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:white; border-radius:12px; margin-bottom:8px; border:1px solid #e9eef5;">
-                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
-                    <div style="font-weight:700; font-size:14px; color:var(--park); background:#e0f2fe; padding:8px 12px; border-radius:10px;">${item.s.replace(' (Park)','').replace(' park','').replace(' Park','')}</div>
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b>${item.perm ? `<span class="perm-dot" style="margin-left:6px;" title="Permesso ${permessoLabel(item.perm)}"></span>` : ''}</div>
+                    <div style="font-weight:700; font-size:14px; color:var(--park); background:#e0f2fe; padding:8px 12px; border-radius:10px;">${item.s.replace(' (Park)','').replace(' park','').replace(' Park','')}${item.perm ? ` <span style="color:var(--bad); font-size:11px;">P ${permessoLabel(item.perm)}</span>` : ''}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -807,7 +816,7 @@ function renderWeeklyAgenda() {
             else if(['ferie','permesso','malattia'].includes(s.toLowerCase())) badgeClass = 'bad';
             else if(parkShifts.includes(s)) badgeClass = 'park';
 
-            let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass };
+            let item = { name: emp.name, s: s, color: emp.color, bc: badgeClass, perm: getPermessoForDay(emp.id, k) };
 
             if (isAbsence) {
                 assenti.push(item);
@@ -824,8 +833,8 @@ function renderWeeklyAgenda() {
                 <div style="font-size:11px; font-weight:800; color:var(--primary); letter-spacing:0.5px; margin-bottom:6px;">⚓ DECK / ORMEGGIO</div>`;
             ormeggiatori.forEach(item => {
                 html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:6px;">
-                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
-                    <span class="badge ${item.bc}" style="min-width:95px; font-size:13px; font-weight:700;">${item.s}</span>
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b>${item.perm ? `<span class="perm-dot" style="margin-left:6px;" title="Permesso ${permessoLabel(item.perm)}"></span>` : ''}</div>
+                    <div style="display:flex; align-items:center; gap:6px;"><span class="badge ${item.bc}" style="min-width:95px; font-size:13px; font-weight:700;">${item.s}</span>${item.perm ? `<span class="perm-txt">P ${permessoLabel(item.perm)}</span>` : ''}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -837,8 +846,8 @@ function renderWeeklyAgenda() {
                 <div style="font-size:11px; font-weight:800; color:var(--park); letter-spacing:0.5px; margin-bottom:6px;">🚙 CASSA & PARKING</div>`;
             cassaPark.forEach(item => {
                 html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:6px;">
-                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b></div>
-                    <span class="badge ${item.bc}" style="min-width:95px; font-size:13px; font-weight:700;">${item.s.replace(' (Park)','').replace(' park','').replace(' Park','')}</span>
+                    <div><span class="dot" style="background:${item.color}"></span><b style="font-size:15px; color:var(--text);">${item.name}</b>${item.perm ? `<span class="perm-dot" style="margin-left:6px;" title="Permesso ${permessoLabel(item.perm)}"></span>` : ''}</div>
+                    <div style="display:flex; align-items:center; gap:6px;"><span class="badge ${item.bc}" style="min-width:95px; font-size:13px; font-weight:700;">${item.s.replace(' (Park)','').replace(' park','').replace(' Park','')}</span>${item.perm ? `<span class="perm-txt">P ${permessoLabel(item.perm)}</span>` : ''}</div>
                 </div>`;
             });
             html += `</div>`;
@@ -901,17 +910,30 @@ function toggleRequestFields() {
 async function submitRequest(){
     const btn = document.getElementById('btnSubmitReq');
     btn.disabled = true;
-    
-    const empId = document.getElementById('requestEmployee').value;
-    const from = document.getElementById('requestFrom').value;
-    const to = document.getElementById('requestTo').value;
-    const type = document.getElementById('requestType').value;
-    const note = document.getElementById('requestNote').value;
 
-    if(!from || !to) {
-        alert("Scegli le date!");
-        btn.disabled = false;
-        return;
+    const empId = document.getElementById('requestEmployee').value;
+    const type  = document.getElementById('requestType').value;
+    const note  = document.getElementById('requestNote').value;
+
+    let from, to, hours = 0, minutes = 0, infoPeriodo;
+
+    if (type === 'Permesso') {
+        const day = document.getElementById('requestDay').value;
+        hours   = parseInt(document.getElementById('requestHours').value || 0);
+        minutes = parseInt(document.getElementById('requestMinutes').value || 0);
+
+        if (!day) { alert("Scegli il giorno del permesso!"); btn.disabled = false; return; }
+        if (hours === 0 && minutes === 0) { alert("Indica la durata del permesso (ore e/o minuti)."); btn.disabled = false; return; }
+
+        from = day;
+        to   = day;
+        infoPeriodo = `il giorno ${formatDateIT(day)} (${hours}h${minutes>0 ? ' '+minutes+'m' : ''})`;
+    } else {
+        from = document.getElementById('requestFrom').value;
+        to   = document.getElementById('requestTo').value;
+
+        if (!from || !to) { alert("Scegli le date!"); btn.disabled = false; return; }
+        infoPeriodo = from === to ? `il giorno ${formatDateIT(from)}` : `dal ${formatDateIT(from)} al ${formatDateIT(to)}`;
     }
 
     try {
@@ -923,6 +945,8 @@ async function submitRequest(){
             type,
             from,
             to,
+            hours,
+            minutes,
             note,
             status: 'In attesa'
         };
@@ -936,7 +960,6 @@ async function submitRequest(){
         // --- PONTE TELEGRAM DIRETTO AL TUO ACCOUNT PRIVATO ---
         const urlPonteGoogle = "https://script.google.com/macros/s/AKfycbxQRG73rPcH6uxC0W4il9JWDjCbio_ycvtAw-srXp9CghmLYr61ziBfEIyTvzWrvHNlGA/exec";
         const nomeDipendente = employeeName(empId);
-        const infoPeriodo = from === to ? `il giorno ${formatDateIT(from)}` : `dal ${formatDateIT(from)} al ${formatDateIT(to)}`;
 
         const messaggioTelegram = `⚓ *Nuova Richiesta da App Turni*\n\n👤 *Dipendente:* ${nomeDipendente}\n🏷 *Tipo Assenza:* ${type}\n📅 *Periodo:* ${infoPeriodo}\n📝 *Note:* _"${note || 'Nessuna nota dichiarata'}"_`;
 
@@ -981,7 +1004,9 @@ function renderRequests(){
 async function approveReq(id, status){
     const r = state.requests.find(x=>x.id===id); if(!r) return;
     r.status = status; touchUpdate('requests');
-    if(status === 'Approvata'){
+    // I Permessi (ore) NON sovrascrivono il turno: resta il turno regolare,
+    // il permesso viene evidenziato con il pallino rosso e conteggiato dal report.
+    if(status === 'Approvata' && r.type !== 'Permesso'){
         let d = new Date(r.from);
         while(d <= new Date(r.to)){
             const k = dateKey(d);
@@ -1052,12 +1077,21 @@ function dateKey(d){
   const m = String(d.getMonth()+1).padStart(2,'0');
   const day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
-}
-function dayHeader(d){ return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit'}); }
+}function dayHeader(d){ return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit'}); }
 function periodLabel(dates){ return dates[0].toLocaleDateString() + " - " + dates[dates.length-1].toLocaleDateString(); }
 function employeeHours(id, dates){ return dates.reduce((sum, d)=> sum + shiftHours(state.shifts[dateKey(d)]?.[id]?.shift), 0); }
 function shiftHours(s){ if(!s || ['riposo','ferie','permesso','malattia','none','-'].includes(s.toLowerCase())) return 0; const p=s.split('-'); if(!p[0]||!p[1]) return 0; const [h1,m1]=p[0].split(/[:.]/).map(Number); const [h2,m2]=p[1].split(/[:.]/).map(Number); return ((h2*60+m2)-(h1*60+m1)-30)/60; }
 function employeeName(id){ return employees.find(e=>e.id===id)?.name || id; }
+
+// --- HELPER PERMESSI (marker rosso senza sovrascrivere il turno) ---
+function permessoLabel(p){ const h=parseInt(p.hours||0), m=parseInt(p.minutes||0); return `${h}h${m>0?' '+m+'m':''}`; }
+function getPermessoForDay(empId, k){
+    return (state.requests||[]).find(r => r.employeeId===empId && r.type==='Permesso' && r.status==='Approvata' && r.from===k) || null;
+}
+function permMarkerHTML(empId, k){
+    const p = getPermessoForDay(empId, k);
+    return p ? `<div class="perm-marker" title="Permesso ${permessoLabel(p)}"><span class="perm-dot"></span><span class="perm-txt">P ${permessoLabel(p)}</span></div>` : '';
+}
 
 function fillEmployeeSelects(){
     const myId = getProposedEmpId();
@@ -1088,16 +1122,19 @@ function exportStaffPDF(){
             <thead><tr><th>Staff</th>${dg.map(d=>`<th class="${dayColumnClass(d)}">${dayHeader(d)}</th>`).join('')}</tr></thead>
             <tbody>
                 ${employees.map(e=>`<tr><td><span class="dot" style="background:${e.color}"></span><b>${e.name}</b></td>${dg.map(d=>{
-                    let s=state.shifts[dateKey(d)]?.[e.id]?.shift; if(!s || s==='none') s='-'; 
+                    const k=dateKey(d);
+                    let s=state.shifts[k]?.[e.id]?.shift; if(!s || s==='none') s='-'; 
                     let b=''; if(s.toLowerCase()==='riposo') b='warn'; else if(['ferie','permesso','malattia'].includes(s.toLowerCase())) b='bad'; else if(parkShifts.includes(s)) b='park'; else if(s!=='-') b='ok';
-                    return `<td class="${dayColumnClass(d)}"><span class="badge ${b}">${fmt(s)}</span></td>`;
+                    const perm=getPermessoForDay(e.id, k);
+                    const permHtml=perm?`<div class="perm-print">● P ${permessoLabel(perm)}</div>`:'';
+                    return `<td class="${dayColumnClass(d)}"><span class="badge ${b}">${fmt(s)}</span>${permHtml}</td>`;
                 }).join('')}</tr>`).join('')}
             </tbody>
         </table>`;
     
     let content = isMonth ? `${buildTable(dates.filter(d=>d.getDate()<=15),'Giorni 1 - 15')}<div class="page-break"></div>${buildTable(dates.filter(d=>d.getDate()>=16),'Giorni 16 - Fine Mese')}` : buildTable(dates,'Turni Settimanali');
     
-    const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${title}</title><style>*{ box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; } body{ padding:0; margin:0; background:white; color:#1f2d3d; } .print-wrap{ padding:4mm; } h1{ color:#082b4d; margin:0 0 1mm; font-size:20px; font-weight:800; letter-spacing:-0.5px; } .sub{ color:#64748b; margin-bottom:2mm; font-size:12px; font-weight:600; } .split-title{ font-size:11px; font-weight:700; color:#082b4d; margin:3mm 0 2mm; text-transform:uppercase; letter-spacing:0.5px; } table{ width:100%; border-collapse:collapse; background:white; table-layout: auto; margin-bottom:4px; } th,td{ border:1px solid #cbd5e1; text-align:center; padding:5px 2px; vertical-align:middle; } th{ background:#082b4d; color:white; font-size:10px; font-weight:700; text-transform:uppercase; height:32px; } td:first-child,th:first-child{ text-align:left; width:32mm; min-width:32mm; font-weight:bold; background:#f8fafc; font-size:12px; } td { height:34px; font-size:12px; } .special-day-col{ background:#fff7ed!important; } th.special-day-col{ background:#fed7aa!important; color:#7c2d12!important; } .badge{ display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 26px; padding: 2px; border-radius: 6px; color: white; font-size: 10.5px; font-weight: 700; line-height: 1.1; text-align: center; word-break: normal; } .ok { background: #16803c !important; } .warn { background: #d97706 !important; color: white !important; } .bad { background: #dc2626 !important; } .park { background: #0284c7 !important; } .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } @media print{ @page{ size:A4 landscape; margin:6mm; } .print-wrap{ padding:0; } .page-break { page-break-after: always; height: 0; margin: 0; border: 0; } }</style></head><body><div class="print-wrap"><h1>⚓ Marina Porto Antico</h1><div class="sub">${title} | ${period}</div>${content}</div><script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
+    const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>${title}</title><style>*{ box-sizing:border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact; } body{ padding:0; margin:0; background:white; color:#1f2d3d; } .print-wrap{ padding:4mm; } h1{ color:#082b4d; margin:0 0 1mm; font-size:20px; font-weight:800; letter-spacing:-0.5px; } .sub{ color:#64748b; margin-bottom:2mm; font-size:12px; font-weight:600; } .split-title{ font-size:11px; font-weight:700; color:#082b4d; margin:3mm 0 2mm; text-transform:uppercase; letter-spacing:0.5px; } table{ width:100%; border-collapse:collapse; background:white; table-layout: auto; margin-bottom:4px; } th,td{ border:1px solid #cbd5e1; text-align:center; padding:5px 2px; vertical-align:middle; } th{ background:#082b4d; color:white; font-size:10px; font-weight:700; text-transform:uppercase; height:32px; } td:first-child,th:first-child{ text-align:left; width:32mm; min-width:32mm; font-weight:bold; background:#f8fafc; font-size:12px; } td { height:34px; font-size:12px; } .special-day-col{ background:#fff7ed!important; } th.special-day-col{ background:#fed7aa!important; color:#7c2d12!important; } .badge{ display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 26px; padding: 2px; border-radius: 6px; color: white; font-size: 10.5px; font-weight: 700; line-height: 1.1; text-align: center; word-break: normal; } .ok { background: #16803c !important; } .warn { background: #d97706 !important; color: white !important; } .bad { background: #dc2626 !important; } .park { background: #0284c7 !important; } .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; } .perm-print{ color:#dc2626; font-size:8.5px; font-weight:800; margin-top:2px; line-height:1; } @media print{ @page{ size:A4 landscape; margin:6mm; } .print-wrap{ padding:0; } .page-break { page-break-after: always; height: 0; margin: 0; border: 0; } }</style></head><body><div class="print-wrap"><h1>⚓ Marina Porto Antico</h1><div class="sub">${title} | ${period}</div>${content}</div><script>setTimeout(()=>window.print(),500);<\/script></body></html>`;
     const w = window.open(URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8;'})), '_blank'); if(!w) alert("Popup bloccato. Abilita i popup per poter esportare il PDF.");
 }
 
